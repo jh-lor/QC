@@ -8,13 +8,8 @@ Created on Sat Sep 19 18:23:56 2020
 """
 import cirq
 
-Yp = cirq.YPowGate
-CNOT = cirq.CNOT
-H = cirq.H
-CZ = cirq.CZ
-CX = cirq.CX
 
-def fig2a(exponent, Zerr, Xerr):
+def fig2a(exponent, Zerr, Xerr,eps,kappa):
     """
     BS13 encoding. Applies X and Z gates after the encoding to simulate errors
 
@@ -43,21 +38,22 @@ def fig2a(exponent, Zerr, Xerr):
     fig2a = cirq.Circuit()
     
     #Non-fault tolerant enconding
-    fig2a.append(Yp(exponent = exponent).on(qubits[0]))
-    fig2a.append(CNOT(qubits[0],qubits[3]))
-    fig2a.append(CNOT(qubits[0],qubits[6]))
+    fig2a.append(cirq.YPowGate(exponent = exponent).on(qubits[0]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[3]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[6]))
 
-    fig2a.append(cirq.Moment(H(qubits[3]),H(qubits[6]),H(qubits[0])))
+    fig2a.append(cirq.Moment([cirq.H(qubits[3]),cirq.H(qubits[6]),cirq.H(qubits[0])]))
+
     
     #fault tolerant encoding
-    fig2a.append(CNOT(qubits[0],qubits[1]))
-    fig2a.append(CNOT(qubits[0],qubits[2]))
-    fig2a.append(CNOT(qubits[3],qubits[4]))
-    fig2a.append(CNOT(qubits[3],qubits[5]))
-    fig2a.append(CNOT(qubits[6],qubits[7]))
-    fig2a.append(CNOT(qubits[6],qubits[8]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[1]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[2]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[5]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[7]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[8]))
+    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[4]))
     
-    fig2a.append(cirq.Moment(H(q) for q in qubits[:9]))
+    fig2a.append(cirq.Moment(cirq.H(q) for q in qubits[:9]))
     
     # Test errors
     for z in Zerr:
@@ -66,35 +62,38 @@ def fig2a(exponent, Zerr, Xerr):
         fig2a.append(cirq.X(qubits[x]))
  
     for i in range(4):
-        fig2a.append(H(stab[i]))
+        fig2a.append(cirq.H(stab[i]))
         
+
     #Z1Z4Z2Z5Z3Z6
     for i in range(6):
-        fig2a.append(CZ(qubits[i],stab[0]))
+        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[0]))
 
     
     #Z4Z7Z5Z8Z6Z9
     for i in [3,4,5,6,7,8]:
-        fig2a.append(CZ(qubits[i],stab[1]))
+        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[1]))
 
     #X1X2X4X5X7X8
     for i in [0,1,3,4,6,7]:
-        fig2a.append(H(qubits[i]))
-        fig2a.append(CZ(qubits[i],stab[2]))
-        fig2a.append(H(qubits[i]))
+        fig2a.append(cirq.H(qubits[i]))
+        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[2]))
+        fig2a.append(cirq.H(qubits[i]))
         
     #X2X3X5X6X8X9
     for i in [1,2,4,5,7,8]:
-        fig2a.append(H(qubits[i]))
-        fig2a.append(CZ(qubits[i],stab[3]))
-        fig2a.append(H(qubits[i]))
+        fig2a.append(cirq.H(qubits[i]))
+        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[3]))
+        fig2a.append(cirq.H(qubits[i]))
     
     
-    fig2a.append(cirq.Moment(H(stab[i]) for i in range(4)))
+    fig2a.append(cirq.Moment(cirq.H(stab[i]) for i in range(4)))
         
-    fig2a.append(cirq.Moment(cirq.measure(stab[3],key="X2X3X5X6X8X9"),cirq.measure(stab[2],key="X1X2X4X5X7X8"),cirq.measure(stab[1],key="Z4Z7Z5Z8Z6Z9"),cirq.measure(stab[0],key="Z1Z4Z2Z5Z3Z6")))
+    fig2a.append(cirq.Moment([cirq.measure(stab[3],key="X2X3X5X6X8X9"),cirq.measure(stab[2],key="X1X2X4X5X7X8"),cirq.measure(stab[1],key="Z4Z7Z5Z8Z6Z9"),cirq.measure(stab[0],key="Z1Z4Z2Z5Z3Z6")]))
     
     return fig2a
+
+
 def fig2a_Correct(circuit,lookup_table):
     """
     Accepts a BS encoding and corrects a single error if it exists
@@ -140,31 +139,32 @@ def fig2a_Correct(circuit,lookup_table):
     
     # append new measurements
     for i in range(4):
-        circuit.append(H(stab_corrected[i]))
+        circuit.append(cirq.H(stab_corrected[i]))
         
     #Z1Z4Z2Z5Z3Z6
     for i in range(6):
-        circuit.append(CZ(qubits[i],stab_corrected[0]))
+        circuit.append(cirq.CZ(qubits[i],stab_corrected[0]))
 
     
     #Z4Z7Z5Z8Z6Z9
     for i in [3,4,5,6,7,8]:
-        circuit.append(CZ(qubits[i],stab_corrected[1]))
+        circuit.append(cirq.CZ(qubits[i],stab_corrected[1]))
 
     #X1X2X4X5X7X8
     for i in [0,1,3,4,6,7]:
-        circuit.append(H(qubits[i]))
-        circuit.append(CZ(qubits[i],stab_corrected[2]))
-        circuit.append(H(qubits[i]))
+        circuit.append(cirq.H(qubits[i]))
+        circuit.append(cirq.CZ(qubits[i],stab_corrected[2]))
+        circuit.append(cirq.H(qubits[i]))
         
     #X2X3X5X6X8X9
+
     for i in [1,2,4,5,7,8]:
-        circuit.append(H(qubits[i]))
-        circuit.append(CZ(qubits[i],stab_corrected[3]))
-        circuit.append(H(qubits[i]))
+        circuit.append(cirq.H(qubits[i]))
+        circuit.append(cirq.CZ(qubits[i],stab_corrected[3]))
+        circuit.append(cirq.H(qubits[i]))
     
     
-    circuit.append(cirq.Moment(H(stab_corrected[i]) for i in range(4)))
+    circuit.append(cirq.Moment(cirq.H(stab_corrected[i]) for i in range(4)))
         
     circuit.append(cirq.Moment(cirq.measure(stab_corrected[3],key="Corrected X2X3X5X6X8X9"),cirq.measure(stab_corrected[2],key="Corrected X1X2X4X5X7X8"),cirq.measure(stab_corrected[1],key="Corrected Z4Z7Z5Z8Z6Z9"),cirq.measure(stab_corrected[0],key="Corrected Z1Z4Z2Z5Z3Z6")))
     
@@ -177,7 +177,9 @@ if __name__=="__main__":
     repetitions = 5
     Zerr = [0]
     Xerr= []
-    fig2a= fig2a(exponent, Zerr, Xerr)
+    eps = 0
+    kappa = 0
+    fig2a= fig2a(exponent, Zerr, Xerr,eps,kappa)
     
     s= cirq.Simulator()
     results = s.simulate(fig2a)
