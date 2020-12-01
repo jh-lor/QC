@@ -166,7 +166,7 @@ def fig2a_Correct(circuit,lookup_table):
     
     circuit.append(cirq.Moment(cirq.H(stab_corrected[i]) for i in range(4)))
         
-    circuit.append(cirq.Moment(cirq.measure(stab_corrected[3],key="Corrected X2X3X5X6X8X9"),cirq.measure(stab_corrected[2],key="Corrected X1X2X4X5X7X8"),cirq.measure(stab_corrected[1],key="Corrected Z4Z7Z5Z8Z6Z9"),cirq.measure(stab_corrected[0],key="Corrected Z1Z4Z2Z5Z3Z6")))
+    #circuit.append(cirq.Moment(cirq.measure(stab_corrected[3],key="Corrected X2X3X5X6X8X9"),cirq.measure(stab_corrected[2],key="Corrected X1X2X4X5X7X8"),cirq.measure(stab_corrected[1],key="Corrected Z4Z7Z5Z8Z6Z9"),cirq.measure(stab_corrected[0],key="Corrected Z1Z4Z2Z5Z3Z6")))
     
     return circuit
 
@@ -181,7 +181,9 @@ if __name__=="__main__":
     kappa = 0
     fig2a= fig2a(exponent, Zerr, Xerr,eps,kappa)
     
-    s= cirq.Simulator()
+    #s = cirq.Simulator()
+    s= cirq.DensityMatrixSimulator()
+
     results = s.simulate(fig2a)
     for i in range(repetitions):
         each_rep = {}
@@ -232,5 +234,5 @@ if __name__=="__main__":
             print("Run "+ str(i+1) +": Corrected")
         else:
             print("Run "+ str(i+1) +": Stabilizers "+ str(each_rep))
-    
+    print("hello end")
     
