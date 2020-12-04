@@ -8,6 +8,15 @@ Created on Sat Sep 19 18:23:56 2020
 """
 import cirq
 
+def addStabilizer(circuit,qubits, stab, XZ, qubits_list,eps,kappa):
+    if XZ == "X":
+        for i in qubits_list:
+            fig2a.append(cirq.H(qubits[i]))
+            fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab))
+            fig2a.append(cirq.H(qubits[i]))
+    if XZ == "Z":
+        for i in qubits_list:
+            fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab))
 
 def fig2a(exponent, Zerr, Xerr,eps,kappa):
     """
@@ -31,8 +40,8 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
     
     
     #initialize 9 data qubits, 5 error qubits
-    qubits = cirq.LineQubit.range(14)
-    stab = qubits[9:]
+    qubits = cirq.LineQubit.range(10)
+    stab = qubits[9]
     
     
     fig2a = cirq.Circuit()
@@ -66,30 +75,46 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
         
 
     #Z1Z4Z2Z5Z3Z6
-    for i in range(6):
-        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[0]))
-
+    # for i in range(6):
+    #     fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[0]))
+    addStabilizer(fig2a,qubits,stab Z, [1,2,3,4,5,6],eps,kappa)
+    fig2a.append(cirq.Moment(cirq.H(stab)))
+    fig2a.append(cirq.measure(stab,key="Z1Z4Z2Z5Z3Z6"))
+    fig2a.append(cirq.reset(stab))
     
     #Z4Z7Z5Z8Z6Z9
-    for i in [3,4,5,6,7,8]:
-        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[1]))
-
+    # for i in [3,4,5,6,7,8]:
+        # fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[1]))
+    addStabilizer(fig2a,qubits, stab, Z,[3,4,5,6,7,8],eps,kappa)
+    fig2a.append(cirq.Moment(cirq.H(stab)))
+    fig2a.append(cirq.measure(stab[2],key="Z4Z7Z5Z8Z6Z9"))
+    fig2a.append(cirq.reset(stab))
+    
+    
     #X1X2X4X5X7X8
-    for i in [0,1,3,4,6,7]:
-        fig2a.append(cirq.H(qubits[i]))
-        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[2]))
-        fig2a.append(cirq.H(qubits[i]))
-        
+    # for i in [0,1,3,4,6,7]:
+    #     fig2a.append(cirq.H(qubits[i]))
+    #     fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[2]))
+    #     fig2a.append(cirq.H(qubits[i]))
+    addStabilizer(fig2a,qubits,stab, X, [0,1,3,4,6,7],eps,kappa)
+    fig2a.append(cirq.Moment(cirq.H(stab)))
+    fig2a.append(cirq.measure(stab[2],key="X1X2X4X5X7X8"))
+    fig2a.append(cirq.reset(stab))
+
     #X2X3X5X6X8X9
-    for i in [1,2,4,5,7,8]:
-        fig2a.append(cirq.H(qubits[i]))
-        fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[3]))
-        fig2a.append(cirq.H(qubits[i]))
+    # for i in [1,2,4,5,7,8]:
+    #     fig2a.append(cirq.H(qubits[i]))
+    #     fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[3]))
+    #     fig2a.append(cirq.H(qubits[i]))
+    addStabilizer(fig2a,qubits,stab, X, [1,2,4,5,7,8],eps,kappa)
+    fig2a.append(cirq.Moment(cirq.H(stab)))
+    fig2a.append(cirq.measure(stab[2],key="X2X3X5X6X8X9"))
+    fig2a.append(cirq.reset(stab))
     
     
-    fig2a.append(cirq.Moment(cirq.H(stab[i]) for i in range(4)))
+    fig2a.append(cirq.Moment(cirq.H(stab)))
         
-    fig2a.append(cirq.Moment([cirq.measure(stab[3],key="X2X3X5X6X8X9"),cirq.measure(stab[2],key="X1X2X4X5X7X8"),cirq.measure(stab[1],key="Z4Z7Z5Z8Z6Z9"),cirq.measure(stab[0],key="Z1Z4Z2Z5Z3Z6")]))
+    # fig2a.append(cirq.Moment([cirq.measure(stab[3],key="X2X3X5X6X8X9"),cirq.measure(stab[2],key="X1X2X4X5X7X8"),cirq.measure(stab[1],key="Z4Z7Z5Z8Z6Z9"),cirq.measure(stab[0],key="Z1Z4Z2Z5Z3Z6")]))
     
     return fig2a
 
@@ -111,8 +136,9 @@ def fig2a_Correct(circuit,lookup_table):
         returns original circuit with the appropriate operations appended and a new set of stabilizer measurements
 
     """
-    s= cirq.Simulator()
-    results = s.simulate(circuit)
+    s= cirq.DensityMatrixSimulator()
+    #results = s.simulate(circuit)
+    results = s.run(circuit)
     error_string = ''
     
     # create error string based on stabilizer measurement
@@ -166,7 +192,7 @@ def fig2a_Correct(circuit,lookup_table):
     
     circuit.append(cirq.Moment(cirq.H(stab_corrected[i]) for i in range(4)))
         
-    #circuit.append(cirq.Moment(cirq.measure(stab_corrected[3],key="Corrected X2X3X5X6X8X9"),cirq.measure(stab_corrected[2],key="Corrected X1X2X4X5X7X8"),cirq.measure(stab_corrected[1],key="Corrected Z4Z7Z5Z8Z6Z9"),cirq.measure(stab_corrected[0],key="Corrected Z1Z4Z2Z5Z3Z6")))
+    circuit.append([cirq.measure(stab_corrected[3],key="Corrected X2X3X5X6X8X9"),cirq.measure(stab_corrected[2],key="Corrected X1X2X4X5X7X8"),cirq.measure(stab_corrected[1],key="Corrected Z4Z7Z5Z8Z6Z9"),cirq.measure(stab_corrected[0],key="Corrected Z1Z4Z2Z5Z3Z6")])
     
     return circuit
 
@@ -174,8 +200,8 @@ def fig2a_Correct(circuit,lookup_table):
 
 if __name__=="__main__":
     exponent = 0
-    repetitions = 5
-    Zerr = [0]
+    repetitions = 1
+    Zerr = [2]
     Xerr= []
     eps = 0
     kappa = 0
@@ -184,7 +210,8 @@ if __name__=="__main__":
     #s = cirq.Simulator()
     s= cirq.DensityMatrixSimulator()
 
-    results = s.simulate(fig2a)
+    #results = s.simulate(fig2a)
+    results = s.run(fig2a)
     for i in range(repetitions):
         each_rep = {}
         for key in results.measurements.keys():
@@ -215,8 +242,9 @@ if __name__=="__main__":
     
     fig2a_Corrected = fig2a_Correct(fig2a, lookup_table)
     
-    s= cirq.Simulator()
-    results = s.simulate(fig2a_Corrected)
+    s= cirq.DensityMatrixSimulator()
+    #results = s.simulate(fig2a_Corrected)
+    results =s.run(fig2a_Corrected)
     # density matrix simulator
     # make gates have errors in the them
     # measurement outcome to have some probability distribution
@@ -234,5 +262,5 @@ if __name__=="__main__":
             print("Run "+ str(i+1) +": Corrected")
         else:
             print("Run "+ str(i+1) +": Stabilizers "+ str(each_rep))
-    print("hello end")
+
     
