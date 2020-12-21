@@ -8,15 +8,44 @@ Created on Sat Sep 19 18:23:56 2020
 """
 import cirq
 
+def addX(circuit,qubits,theta,eps,kappa):
+    circuit.append(cirq.rx(theta).on(qubits))
+    circuit.append(cirq.OverX(eps,kappa).on(qubits))
+    return
+
+def addY(circuit,qubits,theta,eps,kappa):
+    circuit.append(cirq.ry(theta).on(qubits))
+    circuit.append(cirq.OverX(eps,kappa).on(qubits))
+    return
+
+def addZ(circuit,qubits,theta,eps,kappa):
+    circuit.append(cirq.rz(theta).on(qubits))
+    circuit.append(cirq.OverX(eps,kappa).on(qubits))
+    return
+
+def addH(circuit,qubits,eps,kappa):
+    return
+
+def addCNOT(circuit, qubits,eps,kappa):
+    circuit.append(cirq.CNOT(qubits[0],qubits[1]))
+    circuit.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[1]))
+    return
+
+def addCZ(circuit,qubits,eps,kappa):
+    circuit.append(cirq.CZ(qubits[0],qubits[1]))
+    circuit.append(cirq.OverCZ(eps,kappa).on(qubits[0],qubits[1]))
+    return
+
 def addStabilizer(circuit,qubits, stab, XZ, qubits_list,eps,kappa):
     if XZ == "X":
         for i in qubits_list:
             circuit.append(cirq.H(qubits[i]))
-            circuit.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab))
+            addCZ(circuit,[qubits[i],stab],eps,kappa)
+            # circuit.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab))
             circuit.append(cirq.H(qubits[i]))
     if XZ == "Z":
         for i in qubits_list:
-            circuit.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab))
+            addCZ(circuit,[qubits[i],stab],eps,kappa)
 
 def fig2a(exponent, Zerr, Xerr,eps,kappa):
     """
@@ -47,20 +76,29 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
     fig2a = cirq.Circuit()
     
     #Non-fault tolerant enconding
-    fig2a.append(cirq.YPowGate(exponent = exponent).on(qubits[0]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[3]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[6]))
+
+    addY(fig2a, qubits[0],exponent,eps,kappa)
+    addCNOT(fig2a,[qubits[0],qubits[3]],eps,kappa)
+    addCNOT(fig2a,[qubits[0],qubits[6]],eps,kappa)
+
+    # fig2a.append(cirq.YPowGate(exponent = exponent).on(qubits[0]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[3]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[6]))
 
     fig2a.append(cirq.Moment([cirq.H(qubits[3]),cirq.H(qubits[6]),cirq.H(qubits[0])]))
 
     
     #fault tolerant encoding
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[1]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[2]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[5]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[7]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[8]))
-    fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[4]))
+    for pair in [(0,1),(0,2),(3,5),(6,7),(6,8),(3,4)]:
+        x,y= pair
+        addCNOT(fig2a,[qubits[x],qubits[y]],eps,kappa)
+
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[1]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[0],qubits[2]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[5]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[7]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[6],qubits[8]))
+    # fig2a.append(cirq.OverCNOT(eps,kappa).on(qubits[3],qubits[4]))
     
     fig2a.append(cirq.Moment(cirq.H(q) for q in qubits[:9]))
     
@@ -77,6 +115,7 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
     #Z1Z4Z2Z5Z3Z6
     # for i in range(6):
     #     fig2a.append(cirq.OverCZ(eps,kappa).on(qubits[i],stab[0]))
+
     addStabilizer(fig2a,qubits,stab,"Z", [1,2,3,4,5,6],eps,kappa)
     fig2a.append(cirq.H(stab))
     fig2a.append(cirq.measure(stab,key="Z1Z4Z2Z5Z3Z6"))
@@ -230,7 +269,7 @@ if __name__=="__main__":
     exponent = 0
     repetitions = 1
     Zerr = []
-    Xerr= [0]
+    Xerr= [5]
     eps = 0
     kappa = 1
     fig2a= fig2a(exponent, Zerr, Xerr,eps,kappa)
@@ -238,7 +277,6 @@ if __name__=="__main__":
     print(Xerr)
     print(eps)
     print(kappa)
-
     
     #s = cirq.Simulator()
     s= cirq.DensityMatrixSimulator()
