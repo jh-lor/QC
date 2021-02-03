@@ -7,6 +7,27 @@ Created on Sat Sep 19 18:23:56 2020
 
 """
 import cirq
+import sys
+
+lookup_table = {
+'0000': 'IIIIIIIII',
+'0100': 'IIZIIIIII',
+'1000': 'ZIIIIIIII',
+'1100': 'IZIIIIIII',
+'0010': 'XIIIIIIII',
+'0001': 'IIIIIIXII',
+'0011': 'IIIXIIIII',
+'1010': 'YIIIIIIII',
+'1011': 'IIIYIIIII',
+'1001': 'IIIIIIYII',
+'1110': 'IIIYIIIII',
+'1111': 'IIIIYIIII',
+'1101': 'IIIIIIIYI',
+'0110': 'IIYIIIIII',
+'0111': 'IIIIIYIII',
+'0101': 'IIIIIIIIY'
+}
+
 
 def addX(circuit,qubits,theta,eps,kappa):
     circuit.append(cirq.rx(theta).on(qubits))
@@ -24,6 +45,8 @@ def addZ(circuit,qubits,theta,eps,kappa):
     return
 
 def addH(circuit,qubits,eps,kappa):
+    # error model not implemented yet
+    circuit.append(cirq.H)
     return
 
 def addCNOT(circuit, qubits,eps,kappa):
@@ -59,6 +82,7 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
         Qubits that have a Z error
     Xerr : Int Arr
         Qubits that have a X error
+
 
     Returns
     -------
@@ -164,7 +188,7 @@ def fig2a_Correct(circuit,lookup_table,eps,kappa):
     Parameters
     ----------
     circuit : cirq.Circuit
-        BS13 encoding with measurement, possibily with an error that will be corrected
+        BS13 encoding with measurement, possibly with an error that will be corrected
     lookup_table : Dict<String,String>
         Converts the bitstring from the stabilizer measurements into the appropriate error correction operations
 
@@ -186,7 +210,8 @@ def fig2a_Correct(circuit,lookup_table,eps,kappa):
     error_string+=str(results.measurements.get('Z4Z7Z5Z8Z6Z9')[0])
     
     
-    print(error_string)
+    #print(error_string)
+
     # retrieve the required error correction
     decode_string = lookup_table.get(error_string)
  
@@ -266,17 +291,24 @@ def fig2a_Correct(circuit,lookup_table,eps,kappa):
 
 
 if __name__=="__main__":
+
+    # Xerr = [sys.argv[1]]
+    # Zerr = [sys.argv[2]]
+    # eps = sys.argv[3]
+    # kappa = sys.argv[4]
+
     exponent = 0
     repetitions = 1
-    Zerr = []
-    Xerr= [5]
+    Xerr= [7]
+    Zerr = [7]
     eps = 0
     kappa = 1
     fig2a= fig2a(exponent, Zerr, Xerr,eps,kappa)
     print(Zerr)
     print(Xerr)
-    print(eps)
-    print(kappa)
+    #print(eps)
+    #print(kappa)
+
     
     #s = cirq.Simulator()
     s= cirq.DensityMatrixSimulator()
@@ -289,27 +321,6 @@ if __name__=="__main__":
             each_rep[key] = results.measurements[key][0]
     
         print("Run "+ str(i+1) +": Stabilizers "+ str(each_rep))
-    
-    
-    lookup_table = {
-    '0000': 'IIIIIIIII',
-    '0100': 'IIZIIIIII',
-    '1000': 'ZIIIIIIII',
-    '1100': 'IZIIIIIII',
-    '0010': 'XIIIIIIII',
-    '0001': 'IIIIIIXII',
-    '0011': 'IIIXIIIII',
-    '1010': 'YIIIIIIII',
-    '1011': 'IIIYIIIII',
-    '1001': 'IIIIIIYII',
-    '1110': 'IIIYIIIII',
-    '1111': 'IIIIYIIII',
-    '1101': 'IIIIIIIYI',
-    '0110': 'IIYIIIIII',
-    '0111': 'IIIIIYIII',
-    '0101': 'IIIIIIIIY'
-    }
-    
     
     fig2a_Corrected = fig2a_Correct(fig2a, lookup_table,eps,kappa)
     
@@ -329,5 +340,3 @@ if __name__=="__main__":
             print("Run "+ str(i+1) +": Corrected")
         else:
             print("Run "+ str(i+1) +": Stabilizers "+ str(each_rep))
-
-    
