@@ -9,6 +9,7 @@ Created on Sat Sep 19 18:23:56 2020
 import cirq
 import sys
 import datetime
+import numpy as np
 
 lookup_table = {
 '0000': 'IIIIIIIII',
@@ -30,7 +31,7 @@ lookup_table = {
 }
 
 size = 3**2+1
-overrotation = False
+overrotation = True # for debugging
 
 
 def addX(circuit,qubits,theta,eps,kappa):
@@ -133,14 +134,14 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
     fig2a.append(cirq.H(stab))  
 
     #Z1Z4Z2Z5Z3Z6
-    addStabilizer(fig2a,qubits,stab,"Z", [1,2,3,4,5,6],eps,kappa)
+    addStabilizer(fig2a,qubits,stab,"Z", [0,3,1,4,2,5],eps,kappa)
     fig2a.append(cirq.H(stab))
     fig2a.append(cirq.measure(stab,key="Z1Z4Z2Z5Z3Z6"))
     fig2a.append(cirq.reset(stab))
     
     #Z4Z7Z5Z8Z6Z9
     fig2a.append(cirq.H(stab))
-    addStabilizer(fig2a,qubits, stab, "Z",[3,4,5,6,7,8],eps,kappa)
+    addStabilizer(fig2a,qubits, stab, "Z",[3,6,4,7,5,8],eps,kappa)
     fig2a.append(cirq.H(stab))
     fig2a.append(cirq.measure(stab,key="Z4Z7Z5Z8Z6Z9"))
     fig2a.append(cirq.reset(stab))
@@ -186,7 +187,7 @@ def fig2a_Correct(circuit, error_string, eps, kappa):
     decode_string = lookup_table.get(error_string)
  
     #initialize 9 data qubits, 5 error qubits
-    print(decode_string)
+    # print(decode_string)
     for i in range(len(decode_string)):
         if decode_string[i]!= 'I':
             # print(i, decode_string[i])
@@ -198,14 +199,14 @@ def fig2a_Correct(circuit, error_string, eps, kappa):
     circuit.append(cirq.H(stab))
         
     #Z1Z4Z2Z5Z3Z6
-    addStabilizer(circuit,qubits,stab, "Z", [1,2,3,4,5,6],eps,kappa)
+    addStabilizer(circuit,qubits,stab, "Z", [0,3,1,4,2,5],eps,kappa)
     circuit.append(cirq.H(stab))
     circuit.append(cirq.measure(stab,key="Corrected Z1Z4Z2Z5Z3Z6"))
     circuit.append(cirq.reset(stab))
     
     #Z4Z7Z5Z8Z6Z9
     circuit.append(cirq.H(stab))
-    addStabilizer(circuit,qubits, stab, "Z",[3,4,5,6,7,8],eps,kappa)
+    addStabilizer(circuit,qubits, stab, "Z",[3,6,4,7,5,8],eps,kappa)
     circuit.append(cirq.H(stab))
     circuit.append(cirq.measure(stab,key="Corrected Z4Z7Z5Z8Z6Z9"))
     circuit.append(cirq.reset(stab))
@@ -236,16 +237,18 @@ if __name__=="__main__":
     # kappa = sys.argv[4]
 
     exponent = 0
-    repetitions = 10
+    repetitions = 3
     Xerr= []
-    Zerr = []
+    Zerr = [2]
+
     eps = 0
     kappa = 1
     fig2a= fig2a(exponent, Zerr, Xerr,eps,kappa)
 
     # print(Zerr)
     # print(Xerr)  
-
+    start = datetime.datetime.now() 
+    print("Start Time: " +start.strftime("%m-%d-%Y,%H:%M:%S"))
     
     results_list = []
 
@@ -265,7 +268,7 @@ if __name__=="__main__":
         for key in results.measurements.keys():
             results_dict[key] = results.measurements[key][0]   
         
-        print("Error String: "+ error_string)
+        # print("Error String: "+ error_string)
 
 
         final_state = results._final_simulator_state.density_matrix.reshape(2**size,2**size)
@@ -288,7 +291,7 @@ if __name__=="__main__":
         else:
             print("Run "+ str(i+1) +": Stabilizers "+ str(results_dict))
 
-        filename = "./bs13/test/"+str(datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))+"_Run"+ str(i+1)+".txt"
+        filename = "./bs13/test/"+str(datetime.datetime.now().strftime("%m-%d-%Y,%H:%M:%S"))+"_Run"+ str(i+1)+".txt"
         f = open(filename, "x")
         f.write(str(fig2a))
         f.write("\n\n")
@@ -297,3 +300,9 @@ if __name__=="__main__":
         f.write(str(results_dict))
 
         results_list.append((error_string, results_dict,corrected)) 
+
+    end = datetime.datetime.now()
+    print("End time:"+end.strftime("%m-%d-%Y,%H:%M:%S"))
+    timedelta = end - start
+    print("Time taken: " + str(timedelta))
+    print("Time taken per reptition: " + str(timedelta/repetitions))
