@@ -22,7 +22,7 @@ lookup_table = {
 '1010': 'YIIIIIIII',
 '1011': 'IIIYIIIII',
 '1001': 'IIIIIIYII',
-'1110': 'IIIYIIIII',
+'1110': 'IYIIIIIII',
 '1111': 'IIIIYIIII',
 '1101': 'IIIIIIIYI',
 '0110': 'IIYIIIIII',
@@ -31,7 +31,7 @@ lookup_table = {
 }
 
 size = 3**2+1
-overrotation = True # for debugging
+overrotation = False # for debugging
 
 
 def addX(circuit,qubits,theta,eps,kappa):
@@ -43,13 +43,13 @@ def addX(circuit,qubits,theta,eps,kappa):
 def addY(circuit,qubits,theta,eps,kappa):
     circuit.append(cirq.ry(theta).on(qubits))
     if overrotation:
-        circuit.append(cirq.OverX(eps,kappa).on(qubits))
+        circuit.append(cirq.OverY(eps,kappa).on(qubits))
     return
 
 def addZ(circuit,qubits,theta,eps,kappa):
     circuit.append(cirq.rz(theta).on(qubits))
     if overrotation:
-        circuit.append(cirq.OverX(eps,kappa).on(qubits))
+        circuit.append(cirq.OverZ(eps,kappa).on(qubits))
     return
 
 def addH(circuit,qubits,eps,kappa):
@@ -109,9 +109,9 @@ def fig2a(exponent, Zerr, Xerr,eps,kappa):
     fig2a = cirq.Circuit()
     
     #Non-fault tolerant enconding
-    addY(fig2a, qubits[0],exponent,eps,kappa)
-    addCNOT(fig2a,[qubits[0],qubits[3]],eps,kappa)
-    addCNOT(fig2a,[qubits[0],qubits[6]],eps,kappa)
+    # addY(fig2a, qubits[0],exponent,eps,kappa)
+    # addCNOT(fig2a,[qubits[0],qubits[3]],eps,kappa)
+    # addCNOT(fig2a,[qubits[0],qubits[6]],eps,kappa)
 
     fig2a.append(cirq.Moment([cirq.H(qubits[3]),cirq.H(qubits[6]),cirq.H(qubits[0])]))
 
@@ -291,13 +291,13 @@ if __name__=="__main__":
         else:
             print("Run "+ str(i+1) +": Stabilizers "+ str(results_dict))
 
-        filename = "./bs13/test/"+str(datetime.datetime.now().strftime("%m-%d-%Y,%H:%M:%S"))+"_Run"+ str(i+1)+".txt"
-        f = open(filename, "x")
-        f.write(str(fig2a))
-        f.write("\n\n")
-        f.write(str(fig2a_Corrected))
-        f.write("\n\n")
-        f.write(str(results_dict))
+        # filename = "./bs13/test/"+str(datetime.datetime.now().strftime("%m-%d-%Y,%H:%M:%S"))+"_Run"+ str(i+1)+".txt"
+        # f = open(filename, "x")
+        # f.write(str(fig2a))
+        # f.write("\n\n")
+        # f.write(str(fig2a_Corrected))
+        # f.write("\n\n")
+        # f.write(str(results_dict))
 
         results_list.append((error_string, results_dict,corrected)) 
 
