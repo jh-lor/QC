@@ -31,13 +31,13 @@ class PauliSim():
     def addXStabilizer(self, qubits, stabilizer):
         self.addH(stabilizer)
         for qubit in qubits:
-            self.addCNOT(stabilizer, qubit)
+            self.addCNOT(qubit, stabilizer)
         self.addH(stabilizer)
     
     def addZStabilizer(self, qubits, stabilizer):
         self.addH(stabilizer)
         for qubit in qubits:
-            self.addCZ(stabilizer, qubit)
+            self.addCZ(qubit, stabilizer)
         self.addH(stabilizer)
 
     # def getOperations(self):
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         sim.addH(i)
 
     # Add Errors Here
-    sim.addX(3)
+    sim.addZ(1)
 
     sim.addZStabilizer([0,3,1,4,2,5], 9)
     sim.addZStabilizer([3,6,4,7,5,8], 10)
