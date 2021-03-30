@@ -1,6 +1,6 @@
 import PauliSim
 
-def BaconShor13()
+def BaconShor13():
     def __init__(self, p, state):
         self.errorRate = p
         self.measurements = {}
