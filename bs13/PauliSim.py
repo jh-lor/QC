@@ -1,8 +1,11 @@
 import numpy as np
 
 class PauliSim():
-    def __init__(self, size):
-        self.state = np.array(np.zeros(2*size).reshape(size,2), dtype = bool)
+    def __init__(self, size = None, initial_state = None):
+        if not (size == None):
+            self.state = np.array(np.zeros(2*size).reshape(size,2), dtype = bool)
+        if not (initial_state== None):
+            self.state = initial_state.astype(bool)
         self.operations = []
 
     def execute(self):
@@ -122,9 +125,6 @@ class DepolarizingNoise():
                         self.operations.append(Gates(qubit).Y)
                     elif random < 12*self.rate/15:
                         self.operations.append(Gates(qubit).Z)
-
-
-        
 
 
 if __name__ == "__main__":
