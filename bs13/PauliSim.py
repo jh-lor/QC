@@ -2,10 +2,10 @@ import numpy as np
 
 class PauliSim():
     def __init__(self, size = None, initial_state = None):
-        if not (size == None):
-            self.state = np.array(np.zeros(2*size).reshape(size,2), dtype = bool)
-        if not (initial_state== None):
+        if type(initial_state) != type(None):
             self.state = initial_state.astype(bool)
+        else:
+            self.state = np.array(np.zeros(2*size).reshape(size,2), dtype = bool)
         self.operations = []
 
     def execute(self):
@@ -54,10 +54,11 @@ class PauliSim():
 
 
 class Gates():
-    def __init__(self, target, control = None):
+    def __init__(self, target, control = None, p = 0):
         self.gate = None
         self.target = target
         self.control = control 
+        self.rate = p
         self.str = ""
     
     def I(self, state):
@@ -85,6 +86,7 @@ class Gates():
         state[self.target][0] =  (state[self.target][0] != state[self.control][0])
         state[self.control][1] = (state[self.target][1] != state[self.control][1])
         state[self.target][1] =  state[self.target][1]
+        # if not self.rate:
         self.str = "CNOT(",self.control,",",self.target,")"
 
     def CZ(self, state):
@@ -102,6 +104,7 @@ class DepolarizingNoise():
         self.number = len(qubits)
         self.rate = p
         self.operations = paulisim.operations
+        self.str = ''
 
     def addNoise(self, state):
         # only implemented noise for 1 and 2 qubits
@@ -111,21 +114,28 @@ class DepolarizingNoise():
             random = seed[i]
             qubit = self.qubits[i]
             if random < self.rate:
+
                 if self.number == 1:
                     if random < self.rate/3:
                         self.operations.append(Gates(qubit).X)
+                        self.str = "Xerr"
                     elif random < 2*self.rate/3:
                         self.operations.append(Gates(qubit).Y)
+                        self.str = "Yerr"
                     else:
                         self.operations.append(Gates(qubit).Z)
+                        self.str = "Zerr"
+
                 if self.number == 2:
                     if random < 4*self.rate/15:
                         self.operations.append(Gates(qubit).X)
+                        self.str = "Xerr"
                     elif random < 8*self.rate/15:
                         self.operations.append(Gates(qubit).Y)
+                        self.str = "Yerr"
                     elif random < 12*self.rate/15:
                         self.operations.append(Gates(qubit).Z)
-
+                        self.str = "Zerr"
 
 if __name__ == "__main__":
     # sim = PauliSim(13)
