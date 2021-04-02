@@ -1,7 +1,7 @@
 import PauliSim as ps
 import numpy as np
 
-class BaconShor13():          
+class BaconShor13():      
 
     def __init__(self, p = 0, state = None):
         self.errorRate = p
@@ -52,10 +52,11 @@ class BaconShor13():
 
         self.state = sim.execute()        
 
-        self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
-        self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
         self.measurements["X1X2X4X5X7X8"] = self.state[11][0]
         self.measurements["X2X3X5X6X8X9"] = self.state[12][0]
+        self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
+        self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
+        
 
         return self.measurements
 
@@ -79,46 +80,55 @@ class BaconShor13():
         '0111': 'IIIIIYIII',
         '0101': 'IIIIIIIIY'
         }
-        
+
         error_string =  ""
-        error_string += str(self.measurements["Z1Z4Z2Z5Z3Z6"])
-        error_string += str(self.measurements["Z4Z7Z5Z8Z6Z9"])
-        error_string += str(self.measurements["X1X2X4X5X7X8"])
-        error_string += str(self.measurements["X2X3X5X6X8X9"])
+        error_string += str(bs13.measurements["X1X2X4X5X7X8"])
+        error_string += str(bs13.measurements["X2X3X5X6X8X9"])
+        error_string += str(bs13.measurements["Z1Z4Z2Z5Z3Z6"])
+        error_string += str(bs13.measurements["Z4Z7Z5Z8Z6Z9"]) 
         
 
         decode_string = lookup_table.get(error_string)
  
         #initialize 9 data qubits, 5 error qubits
+        for i in [9, 10, 11, 12]:
+            self.state[i][0] = 0
         sim = ps.PauliSim(13,self.state)
 
         for i in range(len(decode_string)):
             if decode_string[i]!= 'I':
-                if decode_string[i]=='X': sim.addX(i)
-                if decode_string[i]=='Y': sim.addY(i)
-                if decode_string[i]=='Z': sim.addZ(i)
+                if decode_string[i]=='X': 
+                    sim.addX(i)
+                if decode_string[i]=='Y': 
+                    sim.addY(i)
+                if decode_string[i]=='Z': 
+                    sim.addZ(i)
 
+       
         sim.addZStabilizer([0,3,1,4,2,5], 9)
         sim.addZStabilizer([3,6,4,7,5,8], 10)
         sim.addXStabilizer([0,1,3,4,6,7], 11)
         sim.addXStabilizer([1,2,4,5,7,8], 12)
 
         self.state = sim.execute()        
-
-        self.measurements["Corrected Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
-        self.measurements["Corrected Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
         self.measurements["Corrected X1X2X4X5X7X8"] = self.state[11][0]
         self.measurements["Corrected X2X3X5X6X8X9"] = self.state[12][0]
-
+        self.measurements["Corrected Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
+        self.measurements["Corrected Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
         return self.measurements
 
     # def getState()
 
 if __name__ == "__main__":
-    bs13 = BaconShor13()
+    # first test - don't add any noise to my gates 
+    # call again regarding 
     for x in range(9):
         for z in range(9):
-            bs13.initialize([x],[z])
+            bs13 = BaconShor13()
+            print("Xerr({}), Zerr({})".format(x,z))
+            print(bs13.initialize([x]))
             print(bs13.correctError())
+            
+            # print(bs13.correctError())
 
 
