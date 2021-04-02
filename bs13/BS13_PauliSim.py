@@ -6,7 +6,7 @@ class BaconShor13():
     def __init__(self, p = 0, state = None):
         self.errorRate = p
         self.measurements = {}
-
+        self.appliedchannels = []
         if not state:
             self.state = np.array(np.zeros(2*13).reshape(13,2), dtype = bool)
         else:
@@ -57,6 +57,7 @@ class BaconShor13():
         self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
         self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
         
+        self.appliedchannels+= sim.getOperations()
 
         return self.measurements
 
@@ -93,7 +94,7 @@ class BaconShor13():
         #initialize 9 data qubits, 5 error qubits
         for i in [9, 10, 11, 12]:
             self.state[i][0] = 0
-        sim = ps.PauliSim(13,self.state)
+        sim = ps.PauliSim(13, self.state)
 
         for i in range(len(decode_string)):
             if decode_string[i]!= 'I':
@@ -115,6 +116,9 @@ class BaconShor13():
         self.measurements["Corrected X2X3X5X6X8X9"] = self.state[12][0]
         self.measurements["Corrected Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
         self.measurements["Corrected Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
+
+        self.appliedchannels+= sim.getOperations()
+
         return self.measurements
 
     # def getState()
@@ -128,6 +132,7 @@ if __name__ == "__main__":
             print("Xerr({}), Zerr({})".format(x,z))
             print(bs13.initialize([x]))
             print(bs13.correctError())
+            print(bs13.appliedchannels)
             
             # print(bs13.correctError())
 
