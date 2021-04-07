@@ -1,12 +1,12 @@
-import PauliSim as ps
+from PauliSim import *
 import numpy as np
 
-class BaconShor13():      
-
+class BaconShor13():
     def __init__(self, p = 0, state = None):
         self.errorRate = p
         self.measurements = {}
         self.appliedchannels = []
+
         if not state:
             self.state = np.array(np.zeros(2*13).reshape(13,2), dtype = bool)
         else:
@@ -14,7 +14,7 @@ class BaconShor13():
 
     def initialize(self, Xerr = [], Zerr = []):
 
-        sim = ps.PauliSim(13)
+        sim = PauliSim(13)
         sim.addCNOT(0,3) 
         sim.addCNOT(0,6)  
 
@@ -39,6 +39,7 @@ class BaconShor13():
         for i in range(0,9):
             sim.addH(i)
         
+        # for debugging 
         for i in Xerr:
             sim.addX(i)
         
@@ -94,15 +95,15 @@ class BaconShor13():
         #initialize 9 data qubits, 5 error qubits
         for i in [9, 10, 11, 12]:
             self.state[i][0] = 0
-        sim = ps.PauliSim(13, self.state)
+        sim = PauliSim(13, self.state)
 
         for i in range(len(decode_string)):
-            if decode_string[i]!= 'I':
-                if decode_string[i]=='X': 
+            if decode_string[i] != 'I':
+                if decode_string[i] =='X': 
                     sim.addX(i)
-                if decode_string[i]=='Y': 
+                if decode_string[i] =='Y': 
                     sim.addY(i)
-                if decode_string[i]=='Z': 
+                if decode_string[i] =='Z': 
                     sim.addZ(i)
 
        
@@ -117,7 +118,7 @@ class BaconShor13():
         self.measurements["Corrected Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
         self.measurements["Corrected Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
 
-        self.appliedchannels+= sim.getOperations()
+        self.appliedchannels += sim.getOperations()
 
         return self.measurements
 
@@ -132,8 +133,9 @@ if __name__ == "__main__":
             print("Xerr({}), Zerr({})".format(x,z))
             print(bs13.initialize([x]))
             print(bs13.correctError())
-            print(bs13.appliedchannels)
-            
-            # print(bs13.correctError())
+
+    # bs13 = BaconShor13(1)
+    # bs13.initialize()
+    # print(bs13.state)
 
 

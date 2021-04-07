@@ -167,24 +167,24 @@ class DepolarizingNoise(BaseChannel):
             if random < self.rate:
                 if self.number == 1:
                     if random < self.rate/3:
-                        self.gates.append(self.Xchannel)
+                        self.gate.append(self.Xchannel)
                         self.str += "Xerr(",i,")"
                     elif random < 2*self.rate/3:
-                        self.gates.append(self.Ychannel)
+                        self.gate.append(self.Ychannel)
                         self.str += "Yerr(",i,")"
                     else:
-                        self.gates.append(self.Zchannel)
+                        self.gate.append(self.Zchannel)
                         self.str += "Zerr(",i,")"
 
                 if self.number == 2:
                     if random < 4*self.rate/15:
-                        sself.gates.append(self.Xchannel)
+                        self.gate.append(self.Xchannel)
                         self.str += "Xerr(",i,")"
                     elif random < 8*self.rate/15:
-                        self.gates.append(self.Ychannel)
+                        self.gate.append(self.Ychannel)
                         self.str += "Yerr(",i,")"
                     elif random < 12*self.rate/15:
-                        self.gates.append(self.Zchannel)
+                        self.gate.append(self.Zchannel)
                         self.str += "Zerr(",i,")"
                     else:
                         self.str ="I({})".format(qubit)
