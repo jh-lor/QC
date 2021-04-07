@@ -1,5 +1,6 @@
 from PauliSim import PauliSim
 import numpy as np
+import matplotlib.pyplot as plt
 
 class BaconShor13():
     def __init__(self, p = 0, state = None):
@@ -85,10 +86,10 @@ class BaconShor13():
         }
 
         error_string =  ""
-        error_string += str(bs13.measurements["X1X2X4X5X7X8"])
-        error_string += str(bs13.measurements["X2X3X5X6X8X9"])
-        error_string += str(bs13.measurements["Z1Z4Z2Z5Z3Z6"])
-        error_string += str(bs13.measurements["Z4Z7Z5Z8Z6Z9"]) 
+        error_string += str(self.measurements["X1X2X4X5X7X8"])
+        error_string += str(self.measurements["X2X3X5X6X8X9"])
+        error_string += str(self.measurements["Z1Z4Z2Z5Z3Z6"])
+        error_string += str(self.measurements["Z4Z7Z5Z8Z6Z9"]) 
         
 
         decode_string = lookup_table.get(error_string)
@@ -125,6 +126,30 @@ class BaconShor13():
 
     # def getState()
 
+def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
+    x_array = np.linspace(min_error_rate, max_error_rate, samples)
+    no_error_detected_before_correction = np.zeros(samples, dtype= np.uint16)
+    error_detected_before_correction = np.zeros(samples, dtype = np.uint16)
+    no_error_detected_after_correction = np.zeros(samples, dtype = np.uint16)
+    error_detected_after_correction = np.zeros(samples, dtype = np.uint16)
+
+    for i in range(len(x_array)):
+        for j in range(repetitions):
+            bs13 = BaconShor13(x_array[i])
+            before_correction = bs13.initialize()
+            if before_correction["X1X2X4X5X7X8"] or before_correction["X2X3X5X6X8X9"] or before_correction["Z1Z4Z2Z5Z3Z6"] or before_correction["Z4Z7Z5Z8Z6Z9"]:
+                error_detected_before_correction[i] += 1
+                after_correction = bs13.correctError()
+                if after_correction["Corrected X1X2X4X5X7X8"] or after_correction["Corrected X2X3X5X6X8X9"] or after_correction["Corrected Z1Z4Z2Z5Z3Z6"] or after_correction["Corrected Z4Z7Z5Z8Z6Z9"]:
+                    error_detected_after_correction += 1
+                else:
+                    no_error_detected_after_correction[i] +=1
+            else:
+                no_error_detected_before_correction[i] += 1
+    return x_array, no_error_detected_before_correction, error_detected_before_correction, no_error_detected_after_correction, error_detected_after_correction
+
+
+
 if __name__ == "__main__":
     # first test - don't add any noise to my gates 
     # call again regarding 
@@ -135,8 +160,13 @@ if __name__ == "__main__":
     #         print(bs13.initialize([x]))
             # print(bs13.correctError())
 
-    bs13 = BaconShor13(1)
-    print(bs13.initialize())
-    print(bs13.appliedchannels)
-
-
+    # bs13 = BaconShor13(0.1)
+    # print(bs13.initialize())
+    # print(bs13.appliedchannels)
+    # print(bs13.correctError())
+    x, no_error_before, error_before, no_error_after, error_after = SimulateEncoding(0,1,50,100)
+    print(x)
+    print(no_error_before)
+    print(error_before)
+    print(no_error_after)
+    print(error_after)
