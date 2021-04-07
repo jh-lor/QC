@@ -107,8 +107,7 @@ class BaconShor13():
                     sim.addY(i)
                 if decode_string[i] =='Z': 
                     sim.addZ(i)
-
-       
+      
         sim.addZStabilizer([0,3,1,4,2,5], 9)
         sim.addZStabilizer([3,6,4,7,5,8], 10)
         sim.addXStabilizer([0,1,3,4,6,7], 11)
@@ -124,8 +123,6 @@ class BaconShor13():
 
         return self.measurements
 
-    # def getState()
-
 def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
     x_array = np.linspace(min_error_rate, max_error_rate, samples)
     no_error_detected_before_correction = np.zeros(samples, dtype= np.uint16)
@@ -140,10 +137,11 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
             if before_correction["X1X2X4X5X7X8"] or before_correction["X2X3X5X6X8X9"] or before_correction["Z1Z4Z2Z5Z3Z6"] or before_correction["Z4Z7Z5Z8Z6Z9"]:
                 error_detected_before_correction[i] += 1
                 after_correction = bs13.correctError()
-                if after_correction["Corrected X1X2X4X5X7X8"] or after_correction["Corrected X2X3X5X6X8X9"] or after_correction["Corrected Z1Z4Z2Z5Z3Z6"] or after_correction["Corrected Z4Z7Z5Z8Z6Z9"]:
-                    error_detected_after_correction += 1
-                else:
-                    no_error_detected_after_correction[i] +=1
+                # check the parity of the x bits and the z bits - even parity for both means no errors
+                # if after_correction["Corrected X1X2X4X5X7X8"] or after_correction["Corrected X2X3X5X6X8X9"] or after_correction["Corrected Z1Z4Z2Z5Z3Z6"] or after_correction["Corrected Z4Z7Z5Z8Z6Z9"]:
+                #     error_detected_after_correction += 1
+                # else:
+                #     no_error_detected_after_correction[i] +=1
             else:
                 no_error_detected_before_correction[i] += 1
     return x_array, no_error_detected_before_correction, error_detected_before_correction, no_error_detected_after_correction, error_detected_after_correction
