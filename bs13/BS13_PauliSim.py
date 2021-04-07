@@ -1,4 +1,4 @@
-from PauliSim import *
+from PauliSim import PauliSim
 import numpy as np
 
 class BaconShor13():
@@ -22,19 +22,19 @@ class BaconShor13():
             sim.addH(i)
 
         sim.addCNOT(0,1)
-        sim.addDepolarizingNoise([0,1], self.errorRate)
+        sim.addDepolarizingNoise([0,1], self.errorRate, 2)
         sim.addCNOT(0,2)
-        sim.addDepolarizingNoise([0,2], self.errorRate)
+        sim.addDepolarizingNoise([0,2], self.errorRate, 2)
 
         sim.addCNOT(3,4)
-        sim.addDepolarizingNoise([3,4], self.errorRate)
+        sim.addDepolarizingNoise([3,4], self.errorRate, 2)
         sim.addCNOT(3,5)
-        sim.addDepolarizingNoise([3,5], self.errorRate)
+        sim.addDepolarizingNoise([3,5], self.errorRate, 2)
 
         sim.addCNOT(6,7)
-        sim.addDepolarizingNoise([6,7], self.errorRate)
+        sim.addDepolarizingNoise([6,7], self.errorRate, 2)
         sim.addCNOT(6,8)
-        sim.addDepolarizingNoise([6,8], self.errorRate)
+        sim.addDepolarizingNoise([6,8], self.errorRate, 2)
 
         for i in range(0,9):
             sim.addH(i)
@@ -56,6 +56,7 @@ class BaconShor13():
         self.measurements["X1X2X4X5X7X8"] = self.state[11][0]
         self.measurements["X2X3X5X6X8X9"] = self.state[12][0]
         self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
+        
         self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
         
         self.appliedchannels+= sim.getOperations()
@@ -135,7 +136,7 @@ if __name__ == "__main__":
             # print(bs13.correctError())
 
     bs13 = BaconShor13(1)
-    bs13.initialize()
-    print(bs13.state)
+    print(bs13.initialize())
+    print(bs13.appliedchannels)
 
 
