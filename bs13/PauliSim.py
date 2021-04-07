@@ -68,10 +68,11 @@ class PauliSim():
 
 class BaseChannel():
     # implement super class for gates and noise
-    def __init__(self, arr):
+    def __init__(self, arr, target = None):
         self.gate = None
         self.str = ""
         self.arr = False
+        self.target = target
 
     def apply(self,state):
         if self.arr:
@@ -95,8 +96,7 @@ class BaseChannel():
 
 class Gates(BaseChannel):
     def __init__(self, target, control = None, p = 0):
-        super().__init__(False)
-        self.target = target
+        super().__init__(False, target)
         self.control = control 
         self.rate = p
         
@@ -168,24 +168,24 @@ class DepolarizingNoise(BaseChannel):
                 if self.number == 1:
                     if random < self.rate/3:
                         self.gate.append(self.Xchannel)
-                        self.str += "Xerr(",i,")"
+                        self.str += "Xerr("+str(i)+")"
                     elif random < 2*self.rate/3:
                         self.gate.append(self.Ychannel)
-                        self.str += "Yerr(",i,")"
+                        self.str += "Yerr("+str(i)+")"
                     else:
                         self.gate.append(self.Zchannel)
-                        self.str += "Zerr(",i,")"
+                        self.str += "Zerr("+str(i)+")"
 
                 if self.number == 2:
                     if random < 4*self.rate/15:
                         self.gate.append(self.Xchannel)
-                        self.str += "Xerr(",i,")"
+                        self.str += "Xerr("+str(i)+")"
                     elif random < 8*self.rate/15:
                         self.gate.append(self.Ychannel)
-                        self.str += "Yerr(",i,")"
+                        self.str += "Yerr("+str(i)+")"
                     elif random < 12*self.rate/15:
                         self.gate.append(self.Zchannel)
-                        self.str += "Zerr(",i,")"
+                        self.str += "Zerr("+str(i)+")"
                     else:
                         self.str ="I({})".format(qubit)
                 else: 

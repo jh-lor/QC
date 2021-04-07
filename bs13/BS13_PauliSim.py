@@ -127,15 +127,15 @@ class BaconShor13():
 if __name__ == "__main__":
     # first test - don't add any noise to my gates 
     # call again regarding 
-    for x in range(9):
-        for z in range(9):
-            bs13 = BaconShor13()
-            print("Xerr({}), Zerr({})".format(x,z))
-            print(bs13.initialize([x]))
-            print(bs13.correctError())
+    # for x in range(9):
+    #     for z in range(9):
+    #         bs13 = BaconShor13()
+    #         print("Xerr({}), Zerr({})".format(x,z))
+    #         print(bs13.initialize([x]))
+            # print(bs13.correctError())
 
-    # bs13 = BaconShor13(1)
-    # bs13.initialize()
-    # print(bs13.state)
+    bs13 = BaconShor13(1)
+    bs13.initialize()
+    print(bs13.state)
 
 
