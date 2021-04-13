@@ -279,7 +279,7 @@ if __name__ == "__main__":
     for i in range(100):
         sim = PauliSim(2)
         target = [0,1]
-        sim.addDepolarizingNoise(target,1,2)
+        sim.addDepolarizingNoise(target,0.1,2)
         print(sim.execute())
         print(sim.getOperations())
     print("\n")

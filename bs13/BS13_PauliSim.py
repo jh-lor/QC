@@ -187,9 +187,10 @@ if __name__ == "__main__":
     error_not_corrected = data[5].astype(np.uint16)
 
 
-    repetitions = len(physical_error_rate)
+    repetitions = 1000
     # plot error statistics before correction
     error_before_detection = error_not_detected + error_detected
+    no_error_rate = no_error*(100/repetitions)
     failed_detection_rate = error_not_detected*(100/repetitions)
     error_detection_rate = error_detected*(100/repetitions)
 
@@ -208,7 +209,7 @@ if __name__ == "__main__":
     labels = [
         "Total Logical Error Rate"
         ]
-    ax.plot(physical_error_rate*100, proportions,
+    ax.stackplot(physical_error_rate*100, proportions,
                 labels= labels)
     ax.plot(physical_error_rate*100,physical_error_rate*100)
     ax.legend(loc='upper left')
@@ -222,7 +223,7 @@ if __name__ == "__main__":
 
     
     fig, ax = plt.subplots()
-    proportions = [no_error, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
+    proportions = [no_error_rate, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
     labels = [
         "No Error",
         "Error Corrected",
