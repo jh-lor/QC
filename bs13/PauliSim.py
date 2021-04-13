@@ -1,4 +1,7 @@
 import numpy as np
+from numba import njit
+import math
+
 
 class PauliSim():
     def __init__(self, size = None, initial_state = None):
@@ -10,7 +13,6 @@ class PauliSim():
 
     def execute(self):
         for channel in self.operations:
-
             channel.apply(self.state)
         return self.state.astype(int)
 
@@ -67,6 +69,7 @@ class PauliSim():
     def getOperations(self):
         return [str(operation).lstrip() for operation in self.operations]
 
+
 class BaseChannel():
     # implement super class for gates and noise
     def __init__(self, arr, target = None):
@@ -98,6 +101,7 @@ class BaseChannel():
     
     def Ichannel(self,state):
         pass
+
 
 class Gates(BaseChannel):
     def __init__(self, target, control = None, p = 0):
@@ -152,7 +156,6 @@ class Gates(BaseChannel):
         self.gate = op
         self.str = "CZ({},{})".format(self.control, self.target)
 
-
 class DepolarizingNoise(BaseChannel):
     def __init__(self, qubits, p, number): 
         self.arr = number>1       
@@ -164,24 +167,44 @@ class DepolarizingNoise(BaseChannel):
 
 
     def addNoise(self):
-        # only implemented noise for 1 and 2 qubits
-        seed = np.random.rand(self.number) 
+
+        error_table = {
+            1 : "IX",
+            2 : "IY",
+            3 : "IZ",
+            4 : "XI",
+            5 : "XX",
+            6 : "XY",
+            7 : "XZ",
+            8 : "YI",
+            9 : "YX",
+            10 : "YY",
+            11 : "YZ",
+            12 : "ZI",
+            13 : "ZX",
+            14 : "ZY",
+            15 : "ZZ"
+        }
+
+        seed = np.random.rand(1) 
         if self.arr:
+            random = seed[0]
             for i in range(self.number):
-                random = seed[i]
                 qubit = self.target[i]
                 if random < self.rate:
-                    if random < 4*self.rate/15:
+                    error_string = error_table[math.ceil(random/self.rate *15)]                
+                    
+                    if error_string[i] == "X":
                         gate = Gates(qubit)
                         gate.X()
                         self.gate.append(gate)
                         self.str += " Xerr("+str(i)+")"
-                    elif random < 8*self.rate/15:
+                    elif error_string[i] == "Y":
                         gate = Gates(qubit)
                         gate.Y()
                         self.gate.append(gate)
                         self.str += " Yerr("+str(i)+")"
-                    elif random < 12*self.rate/15:
+                    elif  error_string[i] == "Z":
                         gate = Gates(qubit)
                         gate.Z()
                         self.gate.append(gate)
@@ -191,29 +214,29 @@ class DepolarizingNoise(BaseChannel):
                 else: 
                     self.str +=" I({})".format(qubit)
 
-        else:
-            random = seed[0]
-            if random< self.rate:
-                if random < self.rate/3:
-                    gate = Gates(self.target)
-                    gate.X()
-                    self.gate = gate
-                    self.str += "Xerr("+str(self.target)+")"
-                elif random < 2*self.rate/3:
-                    gate = Gates(self.target)
-                    gate.Y()
-                    self.gate = gate
-                    self.str += "Yerr("+str(self.target)+")"
-                else:
-                    gate = Gates(self.target)
-                    gate.Z()
-                    self.gate = gate
-                    self.str += "Zerr("+str(self.target)+")"
-            else: 
-                gate = Gates(self.target)
-                gate.I()
-                self.gate = gate
-                self.str +="I("+str(self.target)+")"
+        # else:
+        #     random = seed[0]
+        #     if random< self.rate:
+        #         if random < self.rate/3:
+        #             gate = Gates(self.target)
+        #             gate.X()
+        #             self.gate = gate
+        #             self.str += "Xerr("+str(self.target)+")"
+        #         elif random < 2*self.rate/3:
+        #             gate = Gates(self.target)
+        #             gate.Y()
+        #             self.gate = gate
+        #             self.str += "Yerr("+str(self.target)+")"
+        #         else:
+        #             gate = Gates(self.target)
+        #             gate.Z()
+        #             self.gate = gate
+        #             self.str += "Zerr("+str(self.target)+")"
+        #     else: 
+        #         gate = Gates(self.target)
+        #         gate.I()
+        #         self.gate = gate
+        #         self.str +="I("+str(self.target)+")"
 
         
 
@@ -253,13 +276,13 @@ if __name__ == "__main__":
     # sim.addX(0)
     # print(sim.getOperations())
     # print(sim.execute())
-    # for i in range(100):
-    sim = PauliSim(2)
-    target = [0,1]
-    sim.addDepolarizingNoise(target,1,2)
-    print(sim.execute())
-    print(sim.getOperations())
-    # print("\n")
+    for i in range(100):
+        sim = PauliSim(2)
+        target = [0,1]
+        sim.addDepolarizingNoise(target,1,2)
+        print(sim.execute())
+        print(sim.getOperations())
+    print("\n")
     
     
 

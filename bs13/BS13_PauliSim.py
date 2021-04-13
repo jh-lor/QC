@@ -1,6 +1,7 @@
 from PauliSim import PauliSim
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class BaconShor13():
     def __init__(self, p = 0, state = None):
@@ -125,46 +126,116 @@ class BaconShor13():
 
 def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
     x_array = np.linspace(min_error_rate, max_error_rate, samples)
-    no_error_detected_before_correction = np.zeros(samples, dtype= np.uint16)
-    error_detected_before_correction = np.zeros(samples, dtype = np.uint16)
-    no_error_detected_after_correction = np.zeros(samples, dtype = np.uint16)
-    error_detected_after_correction = np.zeros(samples, dtype = np.uint16)
+
+    no_error = np.zeros(samples,dtype = np.uint16)
+
+    error_detected = np.zeros(samples, dtype = np.uint16)
+    error_not_detected = np.zeros(samples, dtype = np.uint16)
+
+    error_corrected = np.zeros(samples, dtype = np.uint16)
+    error_not_corrected= np.zeros(samples, dtype = np.uint16)
+    
+    def LogicalError(state):
+        return True if sum(state[0]) % 2 or sum(state[:][0])%2 else False
 
     for i in range(len(x_array)):
         for j in range(repetitions):
             bs13 = BaconShor13(x_array[i])
             before_correction = bs13.initialize()
+            
             if before_correction["X1X2X4X5X7X8"] or before_correction["X2X3X5X6X8X9"] or before_correction["Z1Z4Z2Z5Z3Z6"] or before_correction["Z4Z7Z5Z8Z6Z9"]:
-                error_detected_before_correction[i] += 1
-                after_correction = bs13.correctError()
+                error_detected[i] += 1
+                bs13.correctError()
                 # check the parity of the x bits and the z bits - even parity for both means no errors
-                # if after_correction["Corrected X1X2X4X5X7X8"] or after_correction["Corrected X2X3X5X6X8X9"] or after_correction["Corrected Z1Z4Z2Z5Z3Z6"] or after_correction["Corrected Z4Z7Z5Z8Z6Z9"]:
-                #     error_detected_after_correction += 1
-                # else:
-                #     no_error_detected_after_correction[i] +=1
+                if LogicalError(bs13.state):
+                    error_not_corrected[i] += 1
+                else:
+                    error_corrected[i] += 1
+
             else:
-                no_error_detected_before_correction[i] += 1
-    return x_array, no_error_detected_before_correction, error_detected_before_correction, no_error_detected_after_correction, error_detected_after_correction
+                if LogicalError(bs13.state):
+                    error_not_detected[i] +=1
+                else:
+                    no_error[i] += 1
+
+    return x_array, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected
 
 
 
 if __name__ == "__main__":
-    # first test - don't add any noise to my gates 
-    # call again regarding 
-    # for x in range(9):
-    #     for z in range(9):
-    #         bs13 = BaconShor13()
-    #         print("Xerr({}), Zerr({})".format(x,z))
-    #         print(bs13.initialize([x]))
-            # print(bs13.correctError())
+    # Generate Data
+    # repetitions = 1000
+    # x_tick_number = 100
+    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(0,1, x_tick_number, repetitions)
 
-    # bs13 = BaconShor13(0.1)
-    # print(bs13.initialize())
-    # print(bs13.appliedchannels)
-    # print(bs13.correctError())
-    x, no_error_before, error_before, no_error_after, error_after = SimulateEncoding(0,1,50,100)
-    print(x)
-    print(no_error_before)
-    print(error_before)
-    print(no_error_after)
-    print(error_after)
+    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+
+    # data = np.transpose(data)
+    # np.savetxt("simulation_data.csv", data, delimiter = ",")
+
+
+    # Load Data
+    data = np.loadtxt("simulation_data.csv", delimiter =",")
+
+    data = np.transpose(data)
+
+    physical_error_rate = data[0]
+    no_error = data[1].astype(np.uint16)
+    error_detected = data[2].astype(np.uint16)
+    error_not_detected = data[3].astype(np.uint16)
+    error_corrected = data[4].astype(np.uint16)
+    error_not_corrected = data[5].astype(np.uint16)
+
+
+    repetitions = len(physical_error_rate)
+    # plot error statistics before correction
+    error_before_detection = error_not_detected + error_detected
+    failed_detection_rate = error_not_detected*(100/repetitions)
+    error_detection_rate = error_detected*(100/repetitions)
+
+    # plot error statistics after correction
+    total_error_corrected_rate = error_corrected*(100/repetitions)
+    total_error_not_corrected_rate = error_not_corrected*(100/repetitions)
+
+    # plot error statistics of correction
+    no_zeros = np.where(error_detected == 0, 1, error_detected)
+    error_corrected_rate = error_corrected/no_zeros * 100
+    error_not_corrected_rate = error_not_corrected/no_zeros * 100
+
+
+    fig, ax = plt.subplots()
+    proportions = [failed_detection_rate+ total_error_not_corrected_rate]
+    labels = [
+        "Total Logical Error Rate"
+        ]
+    ax.plot(physical_error_rate*100, proportions,
+                labels= labels)
+    ax.plot(physical_error_rate*100,physical_error_rate*100)
+    ax.legend(loc='upper left')
+    ax.set_title('Logical Error Rate')
+    ax.set_xlabel('Physical Error Rate')
+    ax.set_ylabel('Logical Error Rate')
+    ax.set_xlim(0,100)
+    ax.set_ylim(0,100)
+
+    fig.savefig("Logical Error Rate.png")
+
+    
+    fig, ax = plt.subplots()
+    proportions = [no_error, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
+    labels = [
+        "No Error",
+        "Error Corrected",
+        "Undetected Logical Error",
+        "Uncorrected Logical Error"
+        ]
+    ax.stackplot(physical_error_rate*100, proportions,
+                labels= labels)
+    ax.legend(loc='upper left')
+    ax.set_title('Proportion')
+    ax.set_xlabel('Physical Error Rate')
+    ax.set_ylabel('Proportion')
+    ax.set_xlim(0,100)
+    ax.set_ylim(0,100)
+
+    fig.savefig("Proportion plot.png")
