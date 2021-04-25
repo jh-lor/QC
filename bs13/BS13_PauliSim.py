@@ -2,6 +2,7 @@ from PauliSim import PauliSim
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import datetime as dt
 
 class BaconShor13():
     def __init__(self, p = 0, state = None):
@@ -42,11 +43,11 @@ class BaconShor13():
             sim.addH(i)
         
         # for debugging 
-        for i in Xerr:
-            sim.addX(i)
+        # for i in Xerr:
+        #     sim.addX(i)
         
-        for i in Zerr:
-            sim.addZ(i)
+        # for i in Zerr:
+        #     sim.addZ(i)
 
         sim.addZStabilizer([0,3,1,4,2,5], 9)
         sim.addZStabilizer([3,6,4,7,5,8], 10)
@@ -58,7 +59,6 @@ class BaconShor13():
         self.measurements["X1X2X4X5X7X8"] = self.state[11][0]
         self.measurements["X2X3X5X6X8X9"] = self.state[12][0]
         self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
-        
         self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]
         
         self.appliedchannels+= sim.getOperations()
@@ -136,9 +136,12 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
     error_not_corrected= np.zeros(samples, dtype = np.uint16)
     
     def LogicalError(state):
-        return True if sum(state[0]) % 2 or sum(state[:][0])%2 else False
+        # return True if sum(state[:,0]) % 2 or sum(state[:,1])%2 else False
+        return True if sum(state[:,0])%2 else False # only checks X errors
 
     for i in range(len(x_array)):
+        now = dt.datetime.now()
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {x_array[i]}')
         for j in range(repetitions):
             bs13 = BaconShor13(x_array[i])
             before_correction = bs13.initialize()
@@ -164,30 +167,32 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions):
 
 if __name__ == "__main__":
     # Generate Data
-    # repetitions = 1000
-    # x_tick_number = 100
-    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(0,1, x_tick_number, repetitions)
+    repetitions = 100000
+    x_tick_number = 100
+    min_error_rate = 0
+    max_error_rate = 1
+    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions)
 
-    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
 
-    # data = np.transpose(data)
-    # np.savetxt("simulation_data.csv", data, delimiter = ",")
+    data = np.transpose(data)
+    np.savetxt(f"simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_code_capacity.csv", data, delimiter = ",")
 
 
     # Load Data
-    data = np.loadtxt("simulation_data.csv", delimiter =",")
+    # data = np.loadtxt(f"simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}.csv", delimiter =",")
 
-    data = np.transpose(data)
+    # data = np.transpose(data)
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint16)
-    error_detected = data[2].astype(np.uint16)
-    error_not_detected = data[3].astype(np.uint16)
-    error_corrected = data[4].astype(np.uint16)
-    error_not_corrected = data[5].astype(np.uint16)
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint16)
+    # error_detected = data[2].astype(np.uint16)
+    # error_not_detected = data[3].astype(np.uint16)
+    # error_corrected = data[4].astype(np.uint16)
+    # error_not_corrected = data[5].astype(np.uint16)
 
 
-    repetitions = 1000
+    # repetitions = 1000
     # plot error statistics before correction
     error_before_detection = error_not_detected + error_detected
     no_error_rate = no_error*(100/repetitions)
@@ -203,7 +208,7 @@ if __name__ == "__main__":
     error_corrected_rate = error_corrected/no_zeros * 100
     error_not_corrected_rate = error_not_corrected/no_zeros * 100
 
-
+    now = dt.datetime.now()
     fig, ax = plt.subplots()
     proportions = [failed_detection_rate+ total_error_not_corrected_rate]
     labels = [
@@ -211,15 +216,15 @@ if __name__ == "__main__":
         ]
     ax.stackplot(physical_error_rate*100, proportions,
                 labels= labels)
-    ax.plot(physical_error_rate*100,physical_error_rate*100)
+    ax.plot(physical_error_rate*100,physical_error_rate*50)
     ax.legend(loc='upper left')
     ax.set_title('Logical Error Rate')
     ax.set_xlabel('Physical Error Rate')
     ax.set_ylabel('Logical Error Rate')
-    ax.set_xlim(0,100)
-    ax.set_ylim(0,100)
+    # ax.set_xlim(min_error_rate,max_error_rate)
+    # ax.set_ylim(0,100)
 
-    fig.savefig("Logical Error Rate.png")
+    fig.savefig("Logical Error Rate Plot Code Capacity.png")
 
     
     fig, ax = plt.subplots()
@@ -236,7 +241,7 @@ if __name__ == "__main__":
     ax.set_title('Proportion')
     ax.set_xlabel('Physical Error Rate')
     ax.set_ylabel('Proportion')
-    ax.set_xlim(0,100)
-    ax.set_ylim(0,100)
+    # ax.set_xlim(min_error_rate,max_error_rate)
+    # ax.set_ylim(0,100)
 
-    fig.savefig("Proportion plot.png")
+    fig.savefig("Proportion of Results Code Capacity.png")
