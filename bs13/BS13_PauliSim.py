@@ -40,8 +40,8 @@ class BaconShor13():
             sim.addCNOT(6,8)
             sim.addDepolarizingNoise([6,8], self.errorRate, 2)
 
-        # for i in range(0,9):
-        #     sim.addH(i)
+            for i in range(0,9):
+                sim.addH(i)
         
         # for debugging 
         # for i in Xerr:
@@ -173,34 +173,34 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
 if __name__ == "__main__":
     # Generate Data
-    repetitions = 100000
+    repetitions = 100
     x_tick_number = 100
     min_error_rate = 0
     max_error_rate = 1
     results_path = "./simulation results/"
-    mode = "initialization_errors"
-    # mode = "code_capacity"
-    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    # mode = "initialization_errors"
+    mode = "code_capacity"
+    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
 
-    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
 
-    # data = np.transpose(data)
+    data = np.transpose(data)
     
 
-    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
 
     # Load Data
-    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
+    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
 
-    data = np.transpose(data)
+    # data = np.transpose(data)
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint32)
-    error_detected = data[2].astype(np.uint32)
-    error_not_detected = data[3].astype(np.uint32)
-    error_corrected = data[4].astype(np.uint32)
-    error_not_corrected = data[5].astype(np.uint32)
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint32)
+    # error_detected = data[2].astype(np.uint32)
+    # error_not_detected = data[3].astype(np.uint32)
+    # error_corrected = data[4].astype(np.uint32)
+    # error_not_corrected = data[5].astype(np.uint32)
 
 
     # plot error statistics before correction
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     ax.set_xlabel('Physical Error Rate')
     ax.set_ylabel('Logical Error Rate')
     ax.set_xlim(0, 20)
-    ax.set_ylim(0, 50)
+    ax.set_ylim(0, 40)
 
     fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}.png")
 
