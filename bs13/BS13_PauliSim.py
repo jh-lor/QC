@@ -173,34 +173,35 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
 if __name__ == "__main__":
     # Generate Data
-    repetitions = 100
+    repetitions = 100000
     x_tick_number = 100
     min_error_rate = 0
     max_error_rate = 1
     results_path = "./simulation results/"
-    # mode = "initialization_errors"
-    mode = "code_capacity"
-    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    mode = "initialization_errors"
+    
+    # mode = "code_capacity"
+    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
 
-    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
 
-    data = np.transpose(data)
+    # data = np.transpose(data)
     
 
-    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
 
     # Load Data
-    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
+    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
 
-    # data = np.transpose(data)
+    data = np.transpose(data)
 
-    # physical_error_rate = data[0]
-    # no_error = data[1].astype(np.uint32)
-    # error_detected = data[2].astype(np.uint32)
-    # error_not_detected = data[3].astype(np.uint32)
-    # error_corrected = data[4].astype(np.uint32)
-    # error_not_corrected = data[5].astype(np.uint32)
+    physical_error_rate = data[0]
+    no_error = data[1].astype(np.uint32)
+    error_detected = data[2].astype(np.uint32)
+    error_not_detected = data[3].astype(np.uint32)
+    error_corrected = data[4].astype(np.uint32)
+    error_not_corrected = data[5].astype(np.uint32)
 
 
     # plot error statistics before correction
@@ -226,16 +227,17 @@ if __name__ == "__main__":
     now = dt.datetime.now()
     plots_path = "./plots/"
     fig, ax = plt.subplots()
+    expected_logical_error_rate = 2/3*100
+    if mode == "code_capacity":
+        expected_logical_error_rate = 100
     proportions = [failed_detection_rate+ total_error_not_corrected_rate]
     labels = [
         "Total Logical Error Rate"
         ]
     ax.stackplot(physical_error_rate*100, proportions,
                 labels= labels)
-    expected_logical_error_rate = 66.6
-    if mode == "code_capacity":
-        expected_logical_error_rate = 100
-    ax.plot(physical_error_rate*100,physical_error_rate*expected_logical_error_rate)
+    
+    ax.plot(physical_error_rate*100,physical_error_rate*expected_logical_error_rate, label = f"Logical Error Rate for one qubit: y = {round(expected_logical_error_rate/100,2)}x")
     ax.legend(loc='upper left')
     ax.set_title(f'Logical Error Rate {mode}')
     plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
@@ -246,25 +248,34 @@ if __name__ == "__main__":
 
     fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}.png")
 
-    
-    fig, ax = plt.subplots()
-    proportions = [no_error_rate, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
+    expected_logical_error_rate_arr = physical_error_rate*expected_logical_error_rate/100
+    print(mode)
+    for i in range(len(physical_error_rate)):
+        if (expected_logical_error_rate_arr[i] - proportions[0][i]/100)*(expected_logical_error_rate_arr[i-1] - proportions[0][i-1]/100)<0:
+            print(expected_logical_error_rate_arr[i])
+            print(proportions[0][i]/100)
+            print(f"between {physical_error_rate[i]} and {physical_error_rate[i-1]}")
 
-    labels = [
-        "No Error",
-        "Error Corrected",
-        "Undetected Logical Error",
-        "Uncorrected Logical Error"
-        ]
-    ax.stackplot(physical_error_rate*100, proportions,
-                labels= labels)
-    ax.legend(loc='upper left')
-    ax.set_title(f'Proportion {mode}')
-    ax.set_xlabel('Physical Error Rate')
-    ax.set_ylabel('Proportion')
-    plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
 
-    # ax.set_xlim(0, 20)
-    # ax.set_ylim(0, 50)
 
-    fig.savefig(f"{plots_path}Proportion of Results {mode}.png")
+    # fig, ax = plt.subplots()
+    # proportions = [no_error_rate, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
+
+    # labels = [
+    #     "No Error",
+    #     "Error Corrected",
+    #     "Undetected Logical Error",
+    #     "Uncorrected Logical Error"
+    #     ]
+    # ax.stackplot(physical_error_rate*100, proportions,
+    #             labels= labels)
+    # ax.legend(loc='upper left')
+    # ax.set_title(f'Proportion {mode}')
+    # ax.set_xlabel('Physical Error Rate')
+    # ax.set_ylabel('Proportion')
+    # plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
+
+    # # ax.set_xlim(0, 20)
+    # # ax.set_ylim(0, 50)
+
+    # fig.savefig(f"{plots_path}Proportion of Results {mode}.png")
