@@ -57,16 +57,20 @@ class PauliSim():
         channel.CZ()
         self.operations.append(channel)
 
-    def addXStabilizer(self, qubits, stabilizer):
+    def addXStabilizer(self, qubits, stabilizer, p = 0):
         self.addH(stabilizer)
         for qubit in qubits:
             self.addCNOT(qubit, stabilizer)
+            if p != 0:    
+                self.addDepolarizingNoise([qubit, stabilizer], p, 2)
         self.addH(stabilizer)
     
-    def addZStabilizer(self, qubits, stabilizer):
+    def addZStabilizer(self, qubits, stabilizer, p = 0):
         self.addH(stabilizer)
         for qubit in qubits:
             self.addCZ(qubit, stabilizer)
+            if p != 0:
+                self.addDepolarizingNoise([qubit, stabilizer], p, 2)
         self.addH(stabilizer)
 
     def getOperations(self):
