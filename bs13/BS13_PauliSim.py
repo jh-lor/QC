@@ -40,7 +40,7 @@ class BaconShor13():
     def initialize(self, Xerr = [], Zerr = []):
 
         sim = PauliSim(13)
-        if self.mode_dict[mode]["initialization"]:
+        if self.mode_dict[self.mode]["initialization"]:
             sim.addCNOT(0,3) 
             sim.addCNOT(0,6)  
 
@@ -66,7 +66,7 @@ class BaconShor13():
                 sim.addH(i)
 
         # Assume perfect initialization
-        if self.mode_dict[mode]["one_qubit"]:
+        if self.mode_dict[self.mode]["one_qubit"]:
             for i in range(9):
                 sim.addDepolarizingNoise(i, self.errorRate, 1)
 
@@ -121,7 +121,7 @@ class BaconShor13():
         if not sim:
             sim = PauliSim(initial_state = initial_state)
 
-        if self.mode_dict[mode]["measurement"] and error:
+        if self.mode_dict[self.mode]["measurement"] and error:
             sim.addZStabilizer([0,3,1,4,2,5], 9, self.errorRate)
             sim.addZStabilizer([3,6,4,7,5,8], 10, self.errorRate)
             sim.addXStabilizer([0,1,3,4,6,7], 11, self.errorRate)
@@ -133,10 +133,10 @@ class BaconShor13():
             sim.addXStabilizer([1,2,4,5,7,8], 12)
 
         self.state = sim.execute()        
-        self.measurements["Corrected X1X2X4X5X7X8"] = self.state[11][0]
-        self.measurements["Corrected X2X3X5X6X8X9"] = self.state[12][0]
-        self.measurements["Corrected Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
-        self.measurements["Corrected Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
+        self.measurements["X1X2X4X5X7X8"] = self.state[11][0]
+        self.measurements["X2X3X5X6X8X9"] = self.state[12][0]
+        self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
+        self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
 
         self.appliedchannels += sim.getOperations()
 
@@ -182,15 +182,14 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
     return x_array, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected
 
-def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetitions, mode = "measurement_error"):
+def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetitions, mode):
     x_array = np.linspace(min_error_rate, max_error_rate, samples)
 
     no_error = np.zeros(samples,dtype = np.uint32)
     logical_error = np.zeros(samples, dtype = np.uint32)
 
-
     def LogicalError(bs13):
-        bs13 = bs13.correctError(False)
+        bs13.correctError(False)
         return True if sum(bs13.state[:,0])%2 else False # only checks X errors
 
     for i in range(len(x_array)):
@@ -321,9 +320,9 @@ def v1():
     # fig.savefig(f"{plots_path}Proportion of Results {mode}.png")
 
 def v2():
-    repetitions = 10
-    x_tick_number = 10
-    min_error_rate = 0
+    repetitions = 100
+    x_tick_number = 100
+    min_error_rate = 0.001
     max_error_rate = 0.2
     results_path = "./simulation results/"
     mode = "measurement_error"
