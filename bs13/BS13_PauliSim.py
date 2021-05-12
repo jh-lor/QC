@@ -389,8 +389,8 @@ def v1():
 def v2():
     """Runs Monte Carlo simulation and saves results
     """
-    repetitions = 10
-    x_tick_number = 10
+    repetitions = 100000
+    x_tick_number = 100
     min_error_rate = 0.001
     max_error_rate = 0.2
     results_path = "./simulation results/"
