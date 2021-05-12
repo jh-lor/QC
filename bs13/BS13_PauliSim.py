@@ -5,7 +5,16 @@ import pandas as pd
 import datetime as dt
 
 class BaconShor13():
+    """Implements a Bacon-Shor-13 simulation using the PauliSim class
+    """
     def __init__(self, mode, p = 0, state = None):
+        """Initializes BaconShor object with error mode, physical error and initial state
+
+        Args:
+            mode (str): error mode for simulation
+            p (float, optional): physical error rate. Defaults to 0.
+            state (numpy arr (int), optional): initial state of system. Defaults to None.
+        """
         self.errorRate = p
         self.measurements = {}
         self.appliedchannels = []
@@ -38,7 +47,15 @@ class BaconShor13():
         }
 
     def initialize(self, Xerr = [], Zerr = []):
+        """Intializes the Bacon-Shor-13 circuit and measures the stabilizers
 
+        Args:
+            Xerr (list, optional): list of index of qubits to append X gates to before stabilizers. For debugging purposes. Defaults to [].
+            Zerr (list, optional): list of index of qubits to append Z gates to before stabilizers. For debugging purposes. Defaults to [].
+
+        Returns:
+            dict: dictionary of measurements. Keys are the stabilizer names.
+        """
         sim = PauliSim(13)
         if self.mode_dict[self.mode]["initialization"]:
             sim.addCNOT(0,3) 
@@ -72,8 +89,15 @@ class BaconShor13():
 
         return self.measure_syndrome(sim)
 
-    def correctError(self, error = True):
+    def correctError(self, error = False):
+        """Measures stabilizers, decode error string and appends the appropriate gate. Measurement may have errors
 
+        Args:
+            error (bool, optional): whether measurement errors can occur. Defaults to False.
+
+        Returns:
+            dict: dictionary of measurements. Keys are the stabilizer names.
+        """
         lookup_table = {
         '0000': 'IIIIIIIII',
         '0100': 'IIZIIIIII',
@@ -117,7 +141,17 @@ class BaconShor13():
 
         return self.measure_syndrome(sim = sim, error = error)
     
-    def measure_syndrome(self, sim = None, initial_state = None, error = True):
+    def measure_syndrome(self, sim = None, initial_state = None, error = False):
+        """Appends stabilizers and measure the stabilizers
+
+        Args:
+            sim (PauliSim, optional): existing pauli simulators whose stabilizer is measured. Defaults to None.
+            initial_state (numpy arr(int), optional): state to measure stabilizers of. Defaults to None.
+            error (bool, optional): whether there is measurement error. Defaults to False.
+
+        Returns:
+            dict: dictionary of measurements. Keys are the stabilizer names.
+        """
         if not sim:
             sim = PauliSim(initial_state = initial_state)
 
@@ -143,6 +177,23 @@ class BaconShor13():
         return self.measurements
 
 def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode):
+    """Monte Carlo simulation of encoding under the code capacity or initialization error model.
+
+    Args:
+        min_error_rate (float): minimum physical error rate of simulation
+        max_error_rate (float): maximum physical error rate of simulation
+        samples (int): number of physical error rate values to simulate
+        repetitions (int): number of simulations per physical error rate
+        mode (str): error model to use
+
+    Returns:
+        x_array (numpy arr (int)): physical error rate values simulated
+        no_error (numpy arr (int)): number of simulations with no logical error
+        error_detected (numpy arr (int)): number of simulations with an error detected
+        error_not_detected (numpy arr (int)): number of simulations with a logical error but it is not detected
+        error_corrected (numpy arr (int)): number of simulations with an error that is corrected
+        error_not_corrected (numpy arr (int)): number of simuations with an error that is incorrectly corrected
+    """
     x_array = np.linspace(min_error_rate, max_error_rate, samples)
 
     no_error = np.zeros(samples,dtype = np.uint32)
@@ -182,7 +233,21 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
     return x_array, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected
 
-def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetitions, mode):
+def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetitions, mode = "measurement_error"):
+    """Monte Carlo simulation of Bacon-Shor-13 encoding with measurement error(repeat measurement until error is detected and then measure again)
+
+    Args:
+        min_error_rate (float): minimum physical error rate of simulation
+        max_error_rate (float): maximum physical error rate of simulation
+        samples (int): number of physical error rate values to simulate
+        repetitions (int): number of simulations per physical error rate
+        mode (str): error model to use (measurement_error)
+
+    Returns:
+        x_array (numpy arr (int)): physical error rate values simulated
+        no_error (numpy arr (int)): number of simulations with no logical error
+        logical_error (numpy arr (int)): number of simultaions with logical error
+    """
     x_array = np.linspace(min_error_rate, max_error_rate, samples)
 
     no_error = np.zeros(samples,dtype = np.uint32)
@@ -204,7 +269,7 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
                 measurement_dict = bs13.measure_syndrome(initial_state = bs13.state)
             # found an error - correct it
             # second state
-            bs13.correctError()
+            bs13.correctError(True)
             
             if LogicalError(bs13):
                 logical_error[i] +=1
@@ -213,6 +278,8 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
     return x_array, no_error, logical_error
 
 def v1():
+    """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
+    """
     # Generate Data
     repetitions = 100000
     x_tick_number = 100
@@ -320,8 +387,10 @@ def v1():
     # fig.savefig(f"{plots_path}Proportion of Results {mode}.png")
 
 def v2():
-    repetitions = 100
-    x_tick_number = 100
+    """Runs Monte Carlo simulation and saves results
+    """
+    repetitions = 10
+    x_tick_number = 10
     min_error_rate = 0.001
     max_error_rate = 0.2
     results_path = "./simulation results/"
