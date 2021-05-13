@@ -87,7 +87,7 @@ class BaconShor13():
             for i in range(9):
                 sim.addDepolarizingNoise(i, self.errorRate, 1)
 
-        return self.measure_syndrome(sim)
+        return self.measure_syndrome(sim, error = self.mode_dict[self.mode]["measurement"])
 
     def correctError(self, error = False):
         """Measures stabilizers, decode error string and appends the appropriate gate. Measurement may have errors
@@ -155,7 +155,7 @@ class BaconShor13():
         if not sim:
             sim = PauliSim(initial_state = initial_state)
 
-        if self.mode_dict[self.mode]["measurement"] and error:
+        if error:
             sim.addZStabilizer([0,3,1,4,2,5], 9, self.errorRate)
             sim.addZStabilizer([3,6,4,7,5,8], 10, self.errorRate)
             sim.addXStabilizer([0,1,3,4,6,7], 11, self.errorRate)
@@ -212,7 +212,7 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {x_array[i]}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {round(x_array[i],4)}')
         for j in range(repetitions):
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             before_correction = bs13.initialize()
@@ -259,14 +259,14 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {x_array[i]}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {round(x_array[i],4)}')
         for j in range(repetitions):
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             measurement_dict = bs13.initialize()
 
             while not(measurement_dict["X1X2X4X5X7X8"] or measurement_dict["X2X3X5X6X8X9"] or measurement_dict["Z1Z4Z2Z5Z3Z6"] or measurement_dict["Z4Z7Z5Z8Z6Z9"]):
                 # 0000 - repeat measurement
-                measurement_dict = bs13.measure_syndrome(initial_state = bs13.state)
+                measurement_dict = bs13.measure_syndrome(initial_state = bs13.state, error = True)
             # found an error - correct it
             # second state
             bs13.correctError(True)
@@ -389,19 +389,58 @@ def v1():
 def v2():
     """Runs Monte Carlo simulation and saves results
     """
-    repetitions = 100000
+    repetitions = 10000
     x_tick_number = 100
-    min_error_rate = 0.001
-    max_error_rate = 0.2
+    min_error_rate = 0.0005
+    max_error_rate = 0.05
     results_path = "./simulation results/"
     mode = "measurement_error"
 
-    physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    # physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
 
-    data = np.vstack((physical_error_rate, no_error, logical_error))
-    data = np.transpose(data)
+    # data = np.vstack((physical_error_rate, no_error, logical_error))
+    # data = np.transpose(data)
     
-    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+
+
+    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter = ",")
+    data = np.transpose(data)
+
+    physical_error_rate = data[0]
+    no_error = data[1].astype(np.uint32)
+    logical_error = data[2].astype(np.uint32)
+
+    # now = dt.datetime.now()
+    plots_path = "./plots/"
+    fig, ax = plt.subplots()
+    expected_logical_error_rate = 2/3*100
+    labels = [
+        "Logical Error Rate"
+        ]
+    ax.stackplot(physical_error_rate*100, logical_error/repetitions,
+                labels= labels)
+    ax.plot(physical_error_rate*100,physical_error_rate*expected_logical_error_rate, label = f"Logical Error Rate for one qubit: y = {round(expected_logical_error_rate/100,2)}x")
+    ax.legend(loc='upper left')
+    ax.set_title(f'Logical Error Rate {mode}')
+    plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
+    ax.set_xlabel('Physical Error Rate')
+    ax.set_ylabel('Logical Error Rate')
+    # ax.set_xlim(0, 20)
+    # ax.set_ylim(0, 40)
+
+    fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}.png")
+
+    # expected_logical_error_rate_arr = physical_error_rate*expected_logical_error_rate/100
+    # print(mode)
+    # for i in range(len(physical_error_rate)):
+    #     if (expected_logical_error_rate_arr[i] - proportions[0][i]/100)*(expected_logical_error_rate_arr[i-1] - proportions[0][i-1]/100)<0:
+    #         print(expected_logical_error_rate_arr[i])
+    #         print(proportions[0][i]/100)
+    #         print(f"between {physical_error_rate[i]} and {physical_error_rate[i-1]}")
+
+
+
 
 if __name__ == "__main__":
     v2()    

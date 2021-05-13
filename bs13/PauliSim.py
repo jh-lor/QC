@@ -122,7 +122,7 @@ class PauliSim():
         self.addH(ancilla)
         for qubit in qubits:
             self.addCNOT(qubit, ancilla)
-            if p != 0:    
+            if p > 0:    
                 self.addDepolarizingNoise([qubit, ancilla], p, 2)
         self.addH(ancilla)
     
@@ -137,7 +137,7 @@ class PauliSim():
         self.addH(ancilla)
         for qubit in qubits:
             self.addCZ(qubit, ancilla)
-            if p != 0:
+            if p > 0:
                 self.addDepolarizingNoise([qubit, ancilla], p, 2)
         self.addH(ancilla)
 
