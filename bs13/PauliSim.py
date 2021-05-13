@@ -20,6 +20,7 @@ class PauliSim():
         else:
             self.state = np.array(np.zeros(2*size).reshape(size,2), dtype = bool)
         self.operations = []
+        self.measurements = {}
 
     def execute(self):
         """Applies all the operations in the operation list to the error state
@@ -33,6 +34,16 @@ class PauliSim():
 
     # def add(self, operation):
     #     self.operations.append(operation)
+
+    def addReset(self, target):
+        channel = Gates(False, target = target)
+        channel.Reset()
+        self.operations.append(channel)
+    
+    def addMeasurement(self, target, key):
+        channel = Gates(False, target = target)
+        channel.Measure(key, self.measurements)
+        self.operations.append(channel)
 
     def addDepolarizingNoise(self, qubits, p, number):
         """Adds depolarizing noise channel to one or two qubits
@@ -181,6 +192,16 @@ class BaseChannel():
     def __str__(self):
         return self.str
 
+    def reset(self,state):
+        """Resets both X and Z bits to 0
+
+        Args:
+            state (numpy arr (bool)): error matrix of PauliSim
+        """
+        state[self.target][0] = False
+        state[self.target][1] = False
+
+
     def Xchannel(self, state):
         """Pauli X channel
 
@@ -225,6 +246,20 @@ class Gates(BaseChannel):
         """
         super().__init__(False, target)
         self.control = control 
+
+    def Reset(self):
+        """Sets gate to Reset and updates the gate string
+        """
+        self.gate = self.Reset
+        self.str = "Reset({self.target})"
+
+    def Measure(self, key, dict):
+
+        def measure(state):
+            dict["key"] = state[self.target][0]
+        self.gate = measure
+        self.str = "M({key})"
+
 
     def I(self):
         """Sets gate to Identity gate and updates the gate string
@@ -376,17 +411,17 @@ class DepolarizingNoise(BaseChannel):
                     gate = Gates(qubit)
                     gate.X()
                     self.gate_list.append(gate)
-                    self.str += " Xerr("+str(i)+")"
+                    self.str += " Xerr("+str(qubit)+")"
                 elif error_string[i] == "Y":
                     gate = Gates(qubit)
                     gate.Y()
                     self.gate_list.append(gate)
-                    self.str += " Yerr("+str(i)+")"
+                    self.str += " Yerr("+str(qubit)+")"
                 elif  error_string[i] == "Z":
                     gate = Gates(qubit)
                     gate.Z()
                     self.gate_list.append(gate)
-                    self.str += " Zerr("+str(i)+")"
+                    self.str += " Zerr("+str(qubit)+")"
                 else:
                     self.str +=" I({})".format(qubit)
             else: 

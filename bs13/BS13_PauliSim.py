@@ -172,6 +172,10 @@ class BaconShor13():
         self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
         self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
 
+        # reset ancilla
+        for i in [9, 10, 11 ,12]:
+            self.state[i][0] = 0
+
         self.appliedchannels += sim.getOperations()
 
         return self.measurements
@@ -270,9 +274,14 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
             # found an error - correct it
             # second state
             bs13.correctError(True)
-            
+
             if LogicalError(bs13):
+                error_list = [operation for operation in bs13.appliedchannels if "err" in operation]
+
+                print(error_list)
+                break
                 logical_error[i] +=1
+                
             else: 
                 no_error[i] += 1
     return x_array, no_error, logical_error
@@ -389,27 +398,27 @@ def v1():
 def v2():
     """Runs Monte Carlo simulation and saves results
     """
-    repetitions = 10000
-    x_tick_number = 100
-    min_error_rate = 0.0005
-    max_error_rate = 0.05
+    repetitions = 10000000
+    x_tick_number = 1
+    min_error_rate = 5e-4
+    max_error_rate = 5.5e-4
     results_path = "./simulation results/"
     mode = "measurement_error"
 
-    # physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
 
-    # data = np.vstack((physical_error_rate, no_error, logical_error))
-    # data = np.transpose(data)
-    
-    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
-
-
-    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter = ",")
+    data = np.vstack((physical_error_rate, no_error, logical_error))
     data = np.transpose(data)
+    
+    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint32)
-    logical_error = data[2].astype(np.uint32)
+
+    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter = ",")
+    # data = np.transpose(data)
+
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint32)
+    # logical_error = data[2].astype(np.uint32)
 
     # now = dt.datetime.now()
     plots_path = "./plots/"
@@ -418,7 +427,7 @@ def v2():
     labels = [
         "Logical Error Rate"
         ]
-    ax.stackplot(physical_error_rate*100, logical_error/repetitions,
+    ax.stackplot(physical_error_rate*100, logical_error/repetitions*100,
                 labels= labels)
     ax.plot(physical_error_rate*100,physical_error_rate*expected_logical_error_rate, label = f"Logical Error Rate for one qubit: y = {round(expected_logical_error_rate/100,2)}x")
     ax.legend(loc='upper left')
