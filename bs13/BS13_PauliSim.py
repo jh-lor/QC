@@ -306,26 +306,22 @@ def v1():
     """
     # Generate Data
     repetitions = 5000
-    x_tick_number = 10
+    x_tick_number = 20
     min_error_rate = 0
     max_error_rate = 1
     results_path = "./simulation results/"
     mode = "initialization_errors"
     
     # mode = "code_capacity"
+
     physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
-
     data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
-
     data = np.transpose(data)
-    
-
     np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
 
     # Load Data
     # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
-
     # data = np.transpose(data)
 
     # physical_error_rate = data[0]
@@ -351,12 +347,6 @@ def v1():
     error_corrected_rate = error_corrected/no_zeros * 100
     error_not_corrected_rate = error_not_corrected/no_zeros * 100
 
-    # print(no_error_rate[:10])
-    # print(total_error_corrected_rate[:10])
-    # print(failed_detection_rate[:10])
-    # print(total_error_not_corrected_rate[:10])
-
-    now = dt.datetime.now()
     plots_path = "./plots/"
     fig, ax = plt.subplots()
     expected_logical_error_rate = 2/3*100
@@ -370,7 +360,7 @@ def v1():
                 labels= labels)
     
     ax.plot(physical_error_rate*100,physical_error_rate*expected_logical_error_rate, label = f"Logical Error Rate for one qubit: y = {round(expected_logical_error_rate/100,2)}x")
-    ax.legend(loc='upper left')
+    ax.legend(loc = 'upper left')
     ax.set_title(f'Logical Error Rate {mode}')
     plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
     ax.set_xlabel('Physical Error Rate')
@@ -465,20 +455,22 @@ def v2():
 
 
 def simple_error_debugger():
+
+    def LogicalError(state):
+        return True if sum(state[:,0]) % 2 else False # checks X error
+
     for i in range(9):
         for j in range(9):
-            print(f"Xerr {i}, Zerr {j}")
             bs13 = BaconShor13("default")
             before_correction = bs13.initialize([i],[j])
-            after_correction = bs13.correctError()
-            if after_correction["X1X2X4X5X7X8"] or after_correction["X2X3X5X6X8X9"] or after_correction["Z1Z4Z2Z5Z3Z6"] or after_correction["Z4Z7Z5Z8Z6Z9"]:
-                print("Before Correction:")
-                print(before_correction)
-                print("After Correction:")
-                print(after_correction)
+            bs13.correctError()
+            print("Before Correction:")
+            print(before_correction)
+            print("Logical Error")
+            logic_error = LogicalError(bs13.state)
+            print(logic_error)
+            if logic_error:
                 print(bs13.state)
-            else:
-                print("Corrected")
 
 
 if __name__ == "__main__":
