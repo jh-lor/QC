@@ -464,16 +464,22 @@ def v2():
     #         print(f"between {physical_error_rate[i]} and {physical_error_rate[i-1]}")
 
 
-
-
-if __name__ == "__main__":
+def simple_error_debugger():
     for i in range(9):
         for j in range(9):
             print(f"Xerr {i}, Zerr {j}")
             bs13 = BaconShor13("default")
             before_correction = bs13.initialize([i],[j])
             after_correction = bs13.correctError()
-            print("Before Correction:")
-            print(before_correction)
-            print("After Correction:")
-            print(after_correction)
+            if after_correction["X1X2X4X5X7X8"] or after_correction["X2X3X5X6X8X9"] or after_correction["Z1Z4Z2Z5Z3Z6"] or after_correction["Z4Z7Z5Z8Z6Z9"]:
+                print("Before Correction:")
+                print(before_correction)
+                print("After Correction:")
+                print(after_correction)
+                print(bs13.state)
+            else:
+                print("Corrected")
+
+
+if __name__ == "__main__":
+    simple_error_debugger()
