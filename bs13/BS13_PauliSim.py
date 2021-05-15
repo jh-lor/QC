@@ -26,9 +26,15 @@ class BaconShor13():
             self.state = state.astype(bool)
 
         self.mode_dict = {
+            "default":
+                {
+                    "initialization": True,
+                    "measurement": False,
+                    "one_qubit": False
+                },
             "initialization_errors":
                 {
-                    "intialization": True,
+                    "initialization": True,
                     "measurement": False,
                     "one_qubit": False
                 },
@@ -56,6 +62,7 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
+        self.appliedchannels += "Initialization"
         sim = PauliSim(13)
         if self.mode_dict[self.mode]["initialization"]:
             sim.addCNOT(0,3) 
@@ -82,6 +89,12 @@ class BaconShor13():
             for i in range(0,9):
                 sim.addH(i)
 
+        for qubit in Xerr:
+            sim.addX(qubit)
+        
+        for qubit in Zerr:
+            sim.addZ(qubit)
+
         # Assume perfect initialization
         if self.mode_dict[self.mode]["one_qubit"]:
             for i in range(9):
@@ -98,6 +111,7 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
+        self.appliedchannels += "Error Correction"
         lookup_table = {
         '0000': 'IIIIIIIII',
         '0100': 'IIZIIIIII',
@@ -152,6 +166,7 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
+        self.appliedchannels += "Syndrome Measurement"
         if not sim:
             sim = PauliSim(initial_state = initial_state)
 
@@ -166,17 +181,18 @@ class BaconShor13():
             sim.addXStabilizer([0,1,3,4,6,7], 11)
             sim.addXStabilizer([1,2,4,5,7,8], 12)
 
-        self.state = sim.execute()        
-        self.measurements["X1X2X4X5X7X8"] = self.state[11][0]
-        self.measurements["X2X3X5X6X8X9"] = self.state[12][0]
-        self.measurements["Z1Z4Z2Z5Z3Z6"] = self.state[9][0]
-        self.measurements["Z4Z7Z5Z8Z6Z9"] = self.state[10][0]     
+        sim.addMeasurement(11, "X1X2X4X5X7X8")
+        sim.addMeasurement(12, "X2X3X5X6X8X9")
+        sim.addMeasurement(9, "Z1Z4Z2Z5Z3Z6")        
+        sim.addMeasurement(10, "Z4Z7Z5Z8Z6Z9")
 
         # reset ancilla
         for i in [9, 10, 11 ,12]:
-            self.state[i][0] = 0
+            sim.addReset(i)
 
+        self.state = sim.execute()
         self.appliedchannels += sim.getOperations()
+        self.measurements = sim.measurements
 
         return self.measurements
 
@@ -216,11 +232,10 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {round(x_array[i],4)}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {round(x_array[i],4)}')
         for j in range(repetitions):
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             before_correction = bs13.initialize()
-            
             if before_correction["X1X2X4X5X7X8"] or before_correction["X2X3X5X6X8X9"] or before_correction["Z1Z4Z2Z5Z3Z6"] or before_correction["Z4Z7Z5Z8Z6Z9"]:
                 error_detected[i] += 1 
                 bs13.correctError()
@@ -263,7 +278,7 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")}: Physical error rate {round(x_array[i],4)}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {round(x_array[i],4)}')
         for j in range(repetitions):
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             measurement_dict = bs13.initialize()
@@ -290,35 +305,35 @@ def v1():
     """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
     """
     # Generate Data
-    repetitions = 100000
-    x_tick_number = 100
+    repetitions = 5000
+    x_tick_number = 10
     min_error_rate = 0
     max_error_rate = 1
     results_path = "./simulation results/"
     mode = "initialization_errors"
     
     # mode = "code_capacity"
-    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
 
-    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
 
-    # data = np.transpose(data)
+    data = np.transpose(data)
     
 
-    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
 
     # Load Data
-    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
+    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
 
-    data = np.transpose(data)
+    # data = np.transpose(data)
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint32)
-    error_detected = data[2].astype(np.uint32)
-    error_not_detected = data[3].astype(np.uint32)
-    error_corrected = data[4].astype(np.uint32)
-    error_not_corrected = data[5].astype(np.uint32)
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint32)
+    # error_detected = data[2].astype(np.uint32)
+    # error_not_detected = data[3].astype(np.uint32)
+    # error_corrected = data[4].astype(np.uint32)
+    # error_not_corrected = data[5].astype(np.uint32)
 
 
     # plot error statistics before correction
@@ -360,18 +375,18 @@ def v1():
     plt.xticks(np.arange(100*min(physical_error_rate), 100*max(physical_error_rate)+1, 5))
     ax.set_xlabel('Physical Error Rate')
     ax.set_ylabel('Logical Error Rate')
-    ax.set_xlim(0, 20)
-    ax.set_ylim(0, 40)
+    # ax.set_xlim(0, 20)
+    # ax.set_ylim(0, 40)
 
     fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}.png")
 
-    expected_logical_error_rate_arr = physical_error_rate*expected_logical_error_rate/100
-    print(mode)
-    for i in range(len(physical_error_rate)):
-        if (expected_logical_error_rate_arr[i] - proportions[0][i]/100)*(expected_logical_error_rate_arr[i-1] - proportions[0][i-1]/100)<0:
-            print(expected_logical_error_rate_arr[i])
-            print(proportions[0][i]/100)
-            print(f"between {physical_error_rate[i]} and {physical_error_rate[i-1]}")
+    # expected_logical_error_rate_arr = physical_error_rate*expected_logical_error_rate/100
+    # print(mode)
+    # for i in range(len(physical_error_rate)):
+    #     if (expected_logical_error_rate_arr[i] - proportions[0][i]/100)*(expected_logical_error_rate_arr[i-1] - proportions[0][i-1]/100)<0:
+    #         print(expected_logical_error_rate_arr[i])
+    #         print(proportions[0][i]/100)
+    #         print(f"between {physical_error_rate[i]} and {physical_error_rate[i-1]}")
 
     # fig, ax = plt.subplots()
     # proportions = [no_error_rate, total_error_corrected_rate, failed_detection_rate, total_error_not_corrected_rate]
@@ -452,4 +467,13 @@ def v2():
 
 
 if __name__ == "__main__":
-    v2()    
+    for i in range(9):
+        for j in range(9):
+            print(f"Xerr {i}, Zerr {j}")
+            bs13 = BaconShor13("default")
+            before_correction = bs13.initialize([i],[j])
+            after_correction = bs13.correctError()
+            print("Before Correction:")
+            print(before_correction)
+            print("After Correction:")
+            print(after_correction)
