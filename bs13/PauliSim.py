@@ -35,6 +35,11 @@ class PauliSim():
     # def add(self, operation):
     #     self.operations.append(operation)
 
+    def addTag(self, tag):
+        tagger = BaseChannel(False)
+        tagger.tag(tag)
+        self.operations.append(tagger)
+
     def addReset(self, target):
         channel = Gates(target)
         channel.Reset()
@@ -192,6 +197,9 @@ class BaseChannel():
     def __str__(self):
         return self.str
 
+    def tag(self, string):
+        self.str = string
+
     def reset_channel(self,state):
         """Resets both X and Z bits to 0
 
@@ -251,14 +259,14 @@ class Gates(BaseChannel):
         """Sets gate to Reset and updates the gate string
         """
         self.gate = self.reset_channel
-        self.str = "Reset({self.target})"
+        self.str = f"Reset({self.target})"
 
     def Measure(self, key, dict):
 
         def measure(state):
             dict[key] = state[self.target][0].astype(int)
         self.gate = measure
-        self.str = "M({key})"
+        self.str = f"M({key})"
 
 
     def I(self):

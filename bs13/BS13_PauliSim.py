@@ -1,8 +1,8 @@
 from PauliSim import PauliSim
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import datetime as dt
+import sys
 
 class BaconShor13():
     """Implements a Bacon-Shor-13 simulation using the PauliSim class
@@ -62,8 +62,8 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
-        self.appliedchannels += "Initialization"
         sim = PauliSim(13)
+        sim.addTag("Initialization")
         if self.mode_dict[self.mode]["initialization"]:
             sim.addCNOT(0,3) 
             sim.addCNOT(0,6)  
@@ -111,7 +111,7 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
-        self.appliedchannels += "Error Correction"
+        
         lookup_table = {
         '0000': 'IIIIIIIII',
         '0100': 'IIZIIIIII',
@@ -143,6 +143,7 @@ class BaconShor13():
         for i in [9, 10, 11, 12]:
             self.state[i][0] = 0
         sim = PauliSim(13, self.state)
+        sim.addTag("Error Correction")
 
         for i in range(len(decode_string)):
             if decode_string[i] != 'I':
@@ -166,9 +167,11 @@ class BaconShor13():
         Returns:
             dict: dictionary of measurements. Keys are the stabilizer names.
         """
-        self.appliedchannels += "Syndrome Measurement"
+        
         if not sim:
             sim = PauliSim(initial_state = initial_state)
+
+        sim.addTag("Measure Syndrome")
 
         if error:
             sim.addZStabilizer([0,3,1,4,2,5], 9, self.errorRate)
@@ -232,7 +235,7 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {round(x_array[i],4)}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {x_array[i]:.2e}')
         for j in range(repetitions):
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             before_correction = bs13.initialize()
@@ -249,10 +252,13 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
                     error_not_detected[i] +=1
                 else:
                     no_error[i] += 1
+            if j<10:
+                print(bs13.state)
+                print(bs13.appliedchannels)
 
     return x_array, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected
 
-def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetitions, mode = "measurement_error"):
+def SimulateMeasurementError(min_error_rate, max_error_rate, samples, req_count, mode = "measurement_error"):
     """Monte Carlo simulation of Bacon-Shor-13 encoding with measurement error(repeat measurement until error is detected and then measure again)
 
     Args:
@@ -278,8 +284,8 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {round(x_array[i],4)}')
-        for j in range(repetitions):
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {x_array[i]:.2e}')
+        while logical_error[i] < req_count:
             bs13 = BaconShor13(p = x_array[i], mode = mode)
             measurement_dict = bs13.initialize()
 
@@ -301,7 +307,7 @@ def SimulateMeasurementError(min_error_rate, max_error_rate, samples, repetition
                 no_error[i] += 1
     return x_array, no_error, logical_error
 
-def v1():
+def v1():#repetitons, x_tick_number, min_error_rate, max_error_rate, mode):
     """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
     """
     # Generate Data
@@ -309,11 +315,10 @@ def v1():
     x_tick_number = 20
     min_error_rate = 0
     max_error_rate = 1
-    results_path = "./simulation results/"
     mode = "initialization_errors"
-    
     # mode = "code_capacity"
-
+    results_path = "./simulation results/"
+        
     physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
     data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
     data = np.transpose(data)
@@ -368,7 +373,7 @@ def v1():
     # ax.set_xlim(0, 20)
     # ax.set_ylim(0, 40)
 
-    fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}.png")
+    fig.savefig(f"{plots_path}Logical Error Rate Plot {mode}_test.png")
 
     # expected_logical_error_rate_arr = physical_error_rate*expected_logical_error_rate/100
     # print(mode)
@@ -403,14 +408,15 @@ def v1():
 def v2():
     """Runs Monte Carlo simulation and saves results
     """
-    repetitions = 10000000
+    # repetitions = 10000000
+    req_counts = 100
     x_tick_number = 1
     min_error_rate = 5e-4
     max_error_rate = 5.5e-4
     results_path = "./simulation results/"
     mode = "measurement_error"
 
-    physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, req_counts, mode)
 
     data = np.vstack((physical_error_rate, no_error, logical_error))
     data = np.transpose(data)
@@ -474,4 +480,4 @@ def simple_error_debugger():
 
 
 if __name__ == "__main__":
-    simple_error_debugger()
+    v1()
