@@ -171,7 +171,7 @@ class BaconShor13():
         if not sim:
             sim = PauliSim(initial_state = initial_state)
 
-        sim.addTag("Measure Syndrome")
+        sim.addTag("Stabilizer Measurement")
 
         if error:
             sim.addZStabilizer([0,3,1,4,2,5], 9, self.errorRate)
@@ -230,6 +230,7 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
     def LogicalError(state):
         both_errors = ["code_capacity"]
         if mode in both_errors:
+            print("both errors")
             return True if sum(state[:,0]) % 2 or sum(state[:,1])%2 else False # checks both X and Z errors
         return True if sum(state[:,0])%2 else False # only checks X errors
 
@@ -245,13 +246,17 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
                 # check the parity of the x bits and the z bits - even parity for both means no errors
                 if LogicalError(bs13.state):
                     error_not_corrected[i] += 1
+                    print("Error Not Corrected")
                 else:
                     error_corrected[i] += 1
+                    print("Error Corrected")
             else:
                 if LogicalError(bs13.state):
                     error_not_detected[i] +=1
+                    print("Error Not Detected")
                 else:
                     no_error[i] += 1
+                    print("No Error")
             if j<10:
                 print(bs13.state)
                 print(bs13.appliedchannels)
@@ -311,8 +316,8 @@ def v1():#repetitons, x_tick_number, min_error_rate, max_error_rate, mode):
     """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
     """
     # Generate Data
-    repetitions = 5000
-    x_tick_number = 20
+    repetitions = 10
+    x_tick_number = 10
     min_error_rate = 0
     max_error_rate = 1
     mode = "initialization_errors"
