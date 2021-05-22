@@ -316,30 +316,29 @@ def v1():#repetitons, x_tick_number, min_error_rate, max_error_rate, mode):
     """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
     """
     # Generate Data
-    repetitions = 10
-    x_tick_number = 10
+    repetitions = 1000
+    x_tick_number = 50
     min_error_rate = 0
     max_error_rate = 1
     mode = "initialization_errors"
     # mode = "code_capacity"
     results_path = "./simulation results/"
         
-    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
-    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
-    data = np.transpose(data)
-    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
-
+    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    # data = np.transpose(data)
+    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
     # Load Data
-    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
-    # data = np.transpose(data)
+    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
+    data = np.transpose(data)
 
-    # physical_error_rate = data[0]
-    # no_error = data[1].astype(np.uint32)
-    # error_detected = data[2].astype(np.uint32)
-    # error_not_detected = data[3].astype(np.uint32)
-    # error_corrected = data[4].astype(np.uint32)
-    # error_not_corrected = data[5].astype(np.uint32)
+    physical_error_rate = data[0]
+    no_error = data[1].astype(np.uint32)
+    error_detected = data[2].astype(np.uint32)
+    error_not_detected = data[3].astype(np.uint32)
+    error_corrected = data[4].astype(np.uint32)
+    error_not_corrected = data[5].astype(np.uint32)
 
 
     # plot error statistics before correction
@@ -421,20 +420,20 @@ def v2():
     results_path = "./simulation results/"
     mode = "measurement_error"
 
-    # physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, req_counts, mode)
+    physical_error_rate, no_error, logical_error = SimulateMeasurementError(min_error_rate, max_error_rate, x_tick_number, req_counts, mode)
 
-    # data = np.vstack((physical_error_rate, no_error, logical_error))
-    # data = np.transpose(data)
-    
-    # np.savetxt(f"{results_path}simulation_data_{req_counts}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
-
-
-    data = np.loadtxt(f"{results_path}simulation_data_{req_counts}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter = ",")
+    data = np.vstack((physical_error_rate, no_error, logical_error))
     data = np.transpose(data)
+    
+    np.savetxt(f"{results_path}simulation_data_{req_counts}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint32)
-    logical_error = data[2].astype(np.uint32)
+
+    # data = np.loadtxt(f"{results_path}simulation_data_{req_counts}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter = ",")
+    # data = np.transpose(data)
+
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint32)
+    # logical_error = data[2].astype(np.uint32)
 
     # now = dt.datetime.now()
     total_each = no_error + logical_error
@@ -486,4 +485,4 @@ def simple_error_debugger():
 
 
 if __name__ == "__main__":
-    v2()
+    v1()
