@@ -231,8 +231,8 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
         both_errors = ["code_capacity"]
         if mode in both_errors:
             print("both errors")
-            return True if sum(state[:,0]) % 2 or sum(state[:,1])%2 else False # checks both X and Z errors
-        return True if sum(state[:,0])%2 else False # only checks X errors
+            return True if sum(state[:9,0]) % 2 or sum(state[:9,1])%2 else False # checks both X and Z errors
+        return True if sum(state[:9,0])%2 else False # only checks X errors
 
     for i in range(len(x_array)):
         now = dt.datetime.now()
@@ -243,23 +243,26 @@ def SimulateEncoding(min_error_rate, max_error_rate, samples, repetitions, mode)
             if before_correction["X1X2X4X5X7X8"] or before_correction["X2X3X5X6X8X9"] or before_correction["Z1Z4Z2Z5Z3Z6"] or before_correction["Z4Z7Z5Z8Z6Z9"]:
                 error_detected[i] += 1 
                 bs13.correctError()
+                if len([error for error in bs13.appliedchannels if "err" in error]) ==1 :
+                    print("only one error")
                 # check the parity of the x bits and the z bits - even parity for both means no errors
                 if LogicalError(bs13.state):
                     error_not_corrected[i] += 1
                     print("Error Not Corrected")
+                    if len([error for error in bs13.appliedchannels if "err" in error]) ==1 :
+                        print(bs13.appliedchannels)
+                        print(bs13.state)
+                        break
                 else:
                     error_corrected[i] += 1
-                    print("Error Corrected")
+                    # print("Error Corrected")
             else:
                 if LogicalError(bs13.state):
                     error_not_detected[i] +=1
-                    print("Error Not Detected")
+                    # print("Error Not Detected")
                 else:
                     no_error[i] += 1
-                    print("No Error")
-            if j<10:
-                print(bs13.state)
-                print(bs13.appliedchannels)
+                    # print("No Error")
 
     return x_array, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected
 
@@ -316,29 +319,29 @@ def v1():#repetitons, x_tick_number, min_error_rate, max_error_rate, mode):
     """Runs monte-carlo simulation for specified parameters and saves results and plots logical error rate against physical error rate
     """
     # Generate Data
-    repetitions = 1000
-    x_tick_number = 50
-    min_error_rate = 0
+    repetitions = int(1e5)
+    x_tick_number = 1
+    min_error_rate = 1e-3
     max_error_rate = 1
-    mode = "initialization_errors"
-    # mode = "code_capacity"
+    # mode = "initialization_errors"
+    mode = "code_capacity"
     results_path = "./simulation results/"
         
-    # physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
-    # data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
-    # data = np.transpose(data)
-    # np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
+    physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected = SimulateEncoding(min_error_rate, max_error_rate, x_tick_number, repetitions, mode)
+    data = np.vstack((physical_error_rate, no_error, error_detected, error_not_detected, error_corrected, error_not_corrected))
+    data = np.transpose(data)
+    np.savetxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", data, delimiter = ",")
 
     # Load Data
-    data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
-    data = np.transpose(data)
+    # data = np.loadtxt(f"{results_path}simulation_data_{repetitions}_{x_tick_number}_{min_error_rate}_{max_error_rate}_{mode}.csv", delimiter =",")
+    # data = np.transpose(data)
 
-    physical_error_rate = data[0]
-    no_error = data[1].astype(np.uint32)
-    error_detected = data[2].astype(np.uint32)
-    error_not_detected = data[3].astype(np.uint32)
-    error_corrected = data[4].astype(np.uint32)
-    error_not_corrected = data[5].astype(np.uint32)
+    # physical_error_rate = data[0]
+    # no_error = data[1].astype(np.uint32)
+    # error_detected = data[2].astype(np.uint32)
+    # error_not_detected = data[3].astype(np.uint32)
+    # error_corrected = data[4].astype(np.uint32)
+    # error_not_corrected = data[5].astype(np.uint32)
 
 
     # plot error statistics before correction

@@ -408,13 +408,11 @@ class DepolarizingNoise(BaseChannel):
             15 : "ZZ"
         }
         seed = np.random.rand(1) 
-
         random = seed[0]
         for i in range(self.number):
             qubit = self.target[i]
             if random < self.rate:
                 error_string = error_table[math.ceil(random/self.rate *15)]                
-                
                 if error_string[i] == "X":
                     gate = Gates(qubit)
                     gate.X()
