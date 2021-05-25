@@ -17,6 +17,12 @@ class BaconShor13():
         self.appliedchannels = []
         self.sim = PauliSim(13)
 
+    def execute(self):
+        self.state = self.sim.execute()
+        self.appliedchannels += self.sim.getOperations()
+        self.measurements = self.sim.measurements
+        self.sim = PauliSim(13, self.sim.state)
+
     def initialize_FT(self):
         """Intializes the Bacon-Shor-13 circuit with two qubit errors
 
@@ -155,12 +161,6 @@ class BaconShor13():
         # reset ancilla
         for i in [9, 10, 11 ,12]:
             self.sim.addReset(i)
-
-        self.state = self.sim.execute()
-        self.appliedchannels += self.sim.getOperations()
-        self.measurements = self.sim.measurements
-
-        #We reset the ancilla qubits and we need to reset the operations list as well for the next time we run the simulation
-        self.sim.clear_operations()
+        self.execute()
 
         return self.measurements
