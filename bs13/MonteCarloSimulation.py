@@ -18,9 +18,7 @@ def progress_bar(pct):
     if pct == 1:
         sys.stdout.write('\n')
     sys.stdout.flush()
-    
         
-
 def monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples):
     physical_error_rates = np.linspace(min_error_rate, max_error_rate, x_tick_number)
     no_errors = np.zeros(x_tick_number, np.uint32)
@@ -95,7 +93,10 @@ def proportion_plot(data, time, mode):
 
     physical_error_rates, no_errors, undetected_errors, uncorrected_errors, corrected_errors = data
 
-    proportions = [no_errors, corrected_errors, undetected_errors, uncorrected_errors]
+    total_repetitions = no_errors + undetected_errors + uncorrected_errors + corrected_errors
+    proportions = [no_errors/total_repetitions, corrected_errors/total_repetitions, 
+    undetected_errors/total_repetitions, uncorrected_errors/total_repetitions]
+    
 
     labels = [
         "No Error",
@@ -118,27 +119,30 @@ def proportion_plot(data, time, mode):
 
 def main():
     # need to implement arg parser
-
+    save_load = "save"
+    load_time = "0525_2345"
     mode =  "code_capacity"
     min_error_rate = 0.01
-    max_error_rate = 0.21
-    x_tick_number = 10
-    req_samples = 100
-
-    data = monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples)
-
-    time_str = datetime.now().strftime("%m%d_%H%M")
+    max_error_rate = 0.10
+    x_tick_number = 100
+    req_samples = 10000
     path = "./simulation results/"
-    fname = f"{path}{time_str}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}"
-
-    save_data(data, fname)
-
-    #data = load_data(fname)
-
-    pseudo_threhsold = pseudo_threshold_plot(data, time_str, mode)
+    
+    if save_load == "save":
+        time_str = datetime.now().strftime("%m%d_%H%M")
+        fname = f"{path}{time_str}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
+        data = monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples)
+        save_data(data, fname)
+    elif save_load == "load":
+        fname = f"{path}{load_time}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
+        data = load_data(fname)
+    else:
+        data = []
+    
+    pseudo_threshold = pseudo_threshold_plot(data, time_str, mode)
     proportion_plot(data, time_str, mode)
 
-    print(f"The pseudo-threshold is {pseudo_threhsold:0.2e}")
+    print(f"The pseudo-threshold is {pseudo_threshold:0.8e}")
 
 
 
