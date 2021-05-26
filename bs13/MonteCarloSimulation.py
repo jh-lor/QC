@@ -120,12 +120,12 @@ def proportion_plot(data, time, mode):
 def main():
     # need to implement arg parser
     save_load = "save"
-    load_time = "0525_2345"
-    mode =  "code_capacity"
+    time_str = "0526_1002"
+    mode =  "initialization_error"
     min_error_rate = 0.01
-    max_error_rate = 0.10
+    max_error_rate = 0.51
     x_tick_number = 100
-    req_samples = 10000
+    req_samples = 5000
     path = "./simulation results/"
     
     if save_load == "save":
@@ -134,15 +134,16 @@ def main():
         data = monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples)
         save_data(data, fname)
     elif save_load == "load":
-        fname = f"{path}{load_time}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
+        # fname = f"{path}{load_time}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
+        fname = "./simulation results/0526_1002_initialization_error_1.00e-02_5.00e-01_50_100.csv"
         data = load_data(fname)
     else:
         data = []
     
     pseudo_threshold = pseudo_threshold_plot(data, time_str, mode)
     proportion_plot(data, time_str, mode)
-
-    print(f"The pseudo-threshold is {pseudo_threshold:0.8e}")
+    if pseudo_threshold:
+        print(f"The pseudo-threshold is {pseudo_threshold:0.8e}")
 
 
 
