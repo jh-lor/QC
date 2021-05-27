@@ -63,3 +63,7 @@ def measurement_error_sampler(physical_error_rate):
         return "Uncorrected Error"
     else:
         return "Corrected Error"
+
+
+if __name__ == "__main__":
+    print(measurement_error_sampler(0.1))

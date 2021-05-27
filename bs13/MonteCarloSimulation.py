@@ -19,8 +19,11 @@ def progress_bar(pct):
         sys.stdout.write('\n')
     sys.stdout.flush()
         
-def monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples):
-    physical_error_rates = np.linspace(min_error_rate, max_error_rate, x_tick_number)
+def monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples, type = "linear"):
+    if type == "linear":
+        physical_error_rates = np.linspace(min_error_rate, max_error_rate, x_tick_number)
+    elif type == "log":
+        physical_error_rates = np.logspace(math.log(min_error_rate,10), math.log(max_error_rate,10), x_tick_number)
     no_errors = np.zeros(x_tick_number, np.uint32)
     undetected_errors = np.zeros(x_tick_number, np.uint32)
     uncorrected_errors = np.zeros(x_tick_number, np.uint32)
@@ -29,7 +32,7 @@ def monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, r
 
     for i in range(x_tick_number):
         now = datetime.now()
-        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {physical_error_rates[i]:.2e}')
+        print(f'{now.strftime("%Y-%m-%d, %H:%M:%S")} Physical error rate {physical_error_rates[i]:.5e}')
         while uncorrected_errors[i] < req_samples:
             result = sampler(physical_error_rates[i])
             if result == "No Error":
@@ -38,6 +41,7 @@ def monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, r
                 undetected_errors[i] += 1
             if result == "Corrected Error":
                 corrected_errors[i] += 1
+                # print(f'Corrected Error {corrected_errors[i]}')
             if result == "Uncorrected Error":
                 uncorrected_errors[i] += 1
                 progress_bar(float(uncorrected_errors[i])/req_samples)
@@ -119,26 +123,24 @@ def proportion_plot(data, time, mode):
 
 def main():
     # need to implement arg parser
-    save_load = "save"
-    time_str = "0526_1002"
-    mode =  "initialization_error"
-    min_error_rate = 0.01
-    max_error_rate = 0.51
-    x_tick_number = 100
-    req_samples = 5000
+    save_load = "load"
+    time_str = "0526_1733"
+    mode =  "measurement_error"
+    tick_type = "linear"
+    min_error_rate = 1e-3
+    max_error_rate = 1e-2
+    x_tick_number = 10
+    req_samples = 100
     path = "./simulation results/"
     
     if save_load == "save":
         time_str = datetime.now().strftime("%m%d_%H%M")
-        fname = f"{path}{time_str}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
-        data = monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples)
+        fname = f"{path}{time_str}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{tick_type}_{req_samples}.csv"
+        data = monte_carlo_simulator(mode, min_error_rate, max_error_rate, x_tick_number, req_samples,tick_type)
         save_data(data, fname)
     elif save_load == "load":
-        # fname = f"{path}{load_time}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{req_samples}.csv"
-        fname = "./simulation results/0526_1002_initialization_error_1.00e-02_5.00e-01_50_100.csv"
+        fname = f"{path}{time_str}_{mode}_{min_error_rate:0.2e}_{max_error_rate:0.2e}_{x_tick_number}_{tick_type}_{req_samples}.csv"
         data = load_data(fname)
-    else:
-        data = []
     
     pseudo_threshold = pseudo_threshold_plot(data, time_str, mode)
     proportion_plot(data, time_str, mode)
